@@ -71,14 +71,14 @@ public class BackupBuddy {
 		
 		/*
 		 * Attempt to parse the arguments when the program is run from the command line
-		 * For example java -jar backupbuddy.jar -keyfile=json -bucket=mybucket -file=mydocument.txt
+		 * For example java -jar backupbuddy.jar -keyfile json -bucket mybucket -file=mydocument.txt
 		 * This initiation would set the variable to their declared value
 		 */
 		try {
 			line = parser.parse(options, args);
 			BUCKET_NAME = line.getOptionValue("bucket", "datadouble");
 			keyFile = line.getOptionValue("keyfile", "json");
-			file = line.getOptionValue("text.txt", "file");
+			file = line.getOptionValue("file", "testfile.txt");
 		} catch (ParseException e2) {
 			logger.error("Failed to parse arguments: " + e2);
 			System.exit(1);
@@ -104,7 +104,7 @@ public class BackupBuddy {
 		 */
 		try {
 			File upload = new File(System.getProperty("user.dir") + File.separator + file);
-			uploadStream("text", "text/plain", new FileInputStream(upload), BUCKET_NAME);
+			uploadStream(file, null, new FileInputStream(upload), BUCKET_NAME);
 			logger.info("File upload accepeted!");
 		} catch (GeneralSecurityException e) {
 			logger.error("File not uploaded: " + e.getMessage());
