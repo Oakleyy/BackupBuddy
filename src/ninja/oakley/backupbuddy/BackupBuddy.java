@@ -7,9 +7,12 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -17,9 +20,11 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -55,7 +60,7 @@ public class BackupBuddy extends Application {
 
 	private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 	private static final Logger logger = LogManager.getLogger("BackupBuddy");
-	private static final String APPLICATION_NAME = "Backup Buddy/1.0";
+	private static final String APPLICATION_NAME = "Backup Buddy/1.1";
 
 	public static Storage storageService;
 
@@ -70,194 +75,254 @@ public class BackupBuddy extends Application {
 		grid.setVgap(10);
 		grid.setPadding(new Insets(25, 25, 25, 25));
 
-		Scene scene = new Scene(grid, 300, 275);
+		Scene scene = new Scene(grid, 600, 275);
+		final FileChooser fileChooser = new FileChooser();
 		primaryStage.setScene(scene);
 
-		Text title = new Text("Lets backup!");
-		title.setFont(Font.font("Corrier New", FontWeight.NORMAL, 20));
+		Text title = new Text("Backup Buddy!");
+		title.setFont(Font.font("Courier New", FontWeight.NORMAL, 20));
+		grid.add(title, 0, 0);
 
 		/*
 		 * File
 		 */
-		Label filePathLabel = new Label("File:");
-		grid.add(filePathLabel, 0, 1);
-
-		TextField filePath = new TextField();
-		grid.add(filePath, 1, 1);
-
-		final FileChooser fileChooser = new FileChooser();
+		Label filePathLabel = new Label("File:     ");
+		TextField fileField = new TextField();
 		Button fileSelButton = new Button("...");
-		grid.add(fileSelButton, 2, 1);
-
-		fileSelButton.setOnAction(
-				new EventHandler<ActionEvent>() {
-					@Override
-					public void handle(final ActionEvent e) {
-						configureFileChooser(fileChooser);
-						File file = fileChooser.showOpenDialog(primaryStage);
-						if (file != null) {
-							filePath.setText(file.getAbsolutePath());
-						}
-					}
-				});
+		HBox fileBox = new HBox(10);
+		
+		fileField.setPrefWidth(225);
+		fileBox.getChildren().addAll(filePathLabel, fileField, fileSelButton);
+		grid.add(fileBox, 0, 1, 4, 1);
+		
+		fileSelButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(final ActionEvent e) {
+				configureFileChooser(fileChooser);
+				File file = fileChooser.showOpenDialog(primaryStage);
+				if (file != null) {
+					fileField.setText(file.getAbsolutePath());
+				}
+			}
+		});
 
 		/*
 		 * Bucket
 		 */
-		 Label bucketNameLabel = new Label("Bucket:");
-		 grid.add(bucketNameLabel, 0, 2);
+		Label bucketNameLabel = new Label("Bucket:");
+		TextField bucketField = new TextField();
+		HBox bucketBox = new HBox(10);
+		
+		bucketField.setPrefWidth(225 - fileSelButton.getWidth());
+		bucketBox.getChildren().addAll(bucketNameLabel, bucketField);
+		grid.add(bucketBox, 0, 2, 4, 1);
 
-		 TextField bucketName = new TextField();
-		 grid.add(bucketName, 1, 2);
+		/*
+		 * Keyfile
+		 */
+		Label keyFilePathLabel = new Label("Keyfile:");
+		TextField keyFileField = new TextField();
+		Button keyFileSelButton = new Button("...");	
+		HBox keyFileBox = new HBox(10);
+		
+		keyFileField.setPrefWidth(225);
+		keyFileBox.getChildren().addAll(keyFilePathLabel, keyFileField, keyFileSelButton);
+		grid.add(keyFileBox, 0, 3, 4, 1);
 
-		 /*
-		  * Keyfile
-		  */
-		 Label keyFilePathLabel = new Label("Keyfile:");
-		 grid.add(keyFilePathLabel, 0, 3);
+		keyFileSelButton.setOnAction(new EventHandler<ActionEvent>() {
 
-		 TextField keyFilePath = new TextField();
-		 grid.add(keyFilePath, 1, 3);
+			@Override
+			public void handle(final ActionEvent e) {
+				configureFileChooser(fileChooser);
+				File file = fileChooser.showOpenDialog(primaryStage);
+				if (file != null) {
+					keyFileField.setText(file.getAbsolutePath());
+				}
+			}
+		});
+		
+		
+		/*
+		 * Error Box
+		 */
+		final Text actiontarget = new Text();
+		grid.add(actiontarget, 1, 6);
 
-		 Button keyFileSelButton = new Button("...");
-		 grid.add(keyFileSelButton, 2, 3);
-		 
-		 keyFileSelButton.setOnAction(
-					new EventHandler<ActionEvent>() {
-						@Override
-						public void handle(final ActionEvent e) {
-							configureFileChooser(fileChooser);
-							File file = fileChooser.showOpenDialog(primaryStage);
-							if (file != null) {
-								keyFilePath.setText(file.getAbsolutePath());
-							}
-						}
-					});
+		Button uploadBtn = new Button("Upload");
+		HBox hbBtn = new HBox(10);
+		
+		hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
+		hbBtn.getChildren().add(uploadBtn);
+		grid.add(hbBtn, 1, 4);
 
-		 final Text actiontarget = new Text();
-		 grid.add(actiontarget, 1, 6);
+		uploadBtn.setOnAction(new EventHandler<ActionEvent>() {
 
-		 Button btn = new Button("Upload");
-		 HBox hbBtn = new HBox(10);
-		 hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
-		 hbBtn.getChildren().add(btn);
-		 grid.add(hbBtn, 1, 4);
-
-		 btn.setOnAction(new EventHandler<ActionEvent>() {
-
-			 @Override
-			 public void handle(ActionEvent event) {
-				 String file = filePath.getText();
-				 String keyFile = keyFilePath.getText();
-				 String bucket = bucketName.getText();
-
-				 if(file.isEmpty() || keyFile.isEmpty() || bucket.isEmpty()){
-					 actiontarget.setText("One or more of the fields are blank.");
-					 event.consume();
-				 }
-
-				 /*
-				  * Attempt to find the JSON key file and throw an error if not found
-				  * If found, authenticate with the Google servers
-				  */
-				 try {
-					 File key = new File(keyFile);
-					 storageService = retrieveStorageService(key);
-					 logger.info("Credentials accepted! Storage service retrieved.");
-				 } catch (GeneralSecurityException e1) {
-					 logger.error("Credentials not accepted: " + e1.getMessage());
-				 } catch (IOException e2){
-					 logger.error("Key File not found or no permission: " + e2.getMessage());
-				 }
-
-				 /*
-				  * Try to upload the defined file as a plain text file to the Storage service
-				  * 
-				  */
-				 try {
-					 File upload = new File(file);
-					 uploadStream(upload.getName(), null, new FileInputStream(upload), bucket);
-					 logger.info("File upload accepeted!");
-				 } catch (GeneralSecurityException e) {
-					 logger.error("File not uploaded: " + e.getMessage());
-				 } catch (IOException e2){
-					 logger.error("Uploading file not found or no permission: " + e2.getMessage());
-				 }
+			@Override
+			public void handle(ActionEvent event) {
+				String file = fileField.getText();
+				String keyFile = keyFileField.getText();
+				String bucket = bucketField.getText();
 
 
-				 actiontarget.setText("Uploaded");
-			 }
-		 });
+				if(keyFile.isEmpty()){
+					keyFilePathLabel.setTextFill(Color.RED);
+					event.consume();
+				}
+
+				if(file.isEmpty()){
+					filePathLabel.setTextFill(Color.RED);
+					event.consume();
+				}
+
+				if(bucket.isEmpty()){
+					bucketNameLabel.setTextFill(Color.RED);
+					event.consume();
+				}
+				
+				if(event.isConsumed()){
+					sendActionMessage(actiontarget, "One or more of the fields are blank.", Color.RED);
+					return;
+				}
+
+				/*
+				 * Attempt to find the JSON key file and throw an error if not found
+				 * If found, authenticate with the Google servers
+				 */
+				try {
+					File key = new File(keyFile);
+					storageService = retrieveStorageService(key);
+					logger.info("Credentials accepted! Storage service retrieved.");
+				} catch (GeneralSecurityException e1) {
+					logger.error("Credentials not accepted: " + e1.getMessage());
+					actiontarget.setText("Credentials not accepted.");
+					actiontarget.setFill(Color.RED);
+					event.consume();
+				} catch (IOException e2){
+					logger.error("Key File not found or no permission: " + e2.getMessage());
+					actiontarget.setText("Key file not found");
+					actiontarget.setFill(Color.RED);
+					event.consume();
+				}
+
+				/*
+				 * Try to upload the defined file as a plain text file to the Storage service
+				 * 
+				 */
+				try {
+					File upload = new File(file);
+					uploadStream(upload.getName(), null, new FileInputStream(upload), bucket);
+					logger.info("File upload accepeted!");
+				} catch (GeneralSecurityException e) {
+					logger.error("File not uploaded: " + e.getMessage());
+					actiontarget.setText("File not uploaded.");
+					actiontarget.setFill(Color.RED);
+					event.consume();
+				} catch (IOException e2){
+					logger.error("Uploading file not found or no permission: " + e2.getMessage());
+					actiontarget.setText("File not found");
+					actiontarget.setFill(Color.RED);
+					event.consume();
+				}
 
 
-		 primaryStage.show();
+				actiontarget.setText("Uploaded");
+				actiontarget.setFill(Color.GREEN);
+			}
+		});
+
+		ListView<String> list = new ListView<String>();
+		ObservableList<String> items = FXCollections.observableArrayList();
+		list.setItems(items);
+		list.setPrefSize(200, 200);
+
+		grid.add(list, 5, 1, 1, 3);
+
+		Button refreshBtn = new Button("Refresh");
+		HBox hRefreshBtn = new HBox(10);
+		
+		hRefreshBtn.setAlignment(Pos.CENTER);
+		hRefreshBtn.getChildren().add(refreshBtn);
+		grid.add(hRefreshBtn, 5, 4);
+
+		refreshBtn.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent event) {
+				String keyFile = keyFileField.getText();
+				String bucket = bucketField.getText();
+
+
+				if(keyFile.isEmpty()){
+					actiontarget.setText("One or more of the fields are blank.");
+					keyFilePathLabel.setTextFill(Color.RED);
+					event.consume();
+				}
+
+				if(bucket.isEmpty()){
+					actiontarget.setText("One or more of the fields are blank.");
+					bucketNameLabel.setTextFill(Color.RED);
+					event.consume();
+				}
+
+				try {
+					File key = new File(keyFile);
+					storageService = retrieveStorageService(key);
+					logger.info("Credentials accepted! Storage service retrieved.");
+				} catch (GeneralSecurityException e1) {
+					logger.error("Credentials not accepted: " + e1.getMessage());
+					actiontarget.setText("Credentials not accepted.");
+					actiontarget.setFill(Color.RED);
+					event.consume();
+				} catch (IOException e2){
+					logger.error("Key File not found or no permission: " + e2.getMessage());
+					actiontarget.setText("Key file not found");
+					actiontarget.setFill(Color.RED);
+					event.consume();
+				}
+
+				List<String> files = new ArrayList<String>();
+				try {
+					List<StorageObject> objects = listBucket(bucket);
+					Iterator<StorageObject> iterObj = objects.iterator();
+
+					while(iterObj.hasNext()){
+						StorageObject next = iterObj.next();
+						files.add(next.getName());
+					}
+
+
+				} catch (IOException e) {
+
+
+				} catch (GeneralSecurityException e) {
+
+
+				}
+
+				if(files.size() > 0){
+					items.clear();
+					items.addAll(files);
+					list.setItems(items);
+					
+					actiontarget.setText("List Updated");
+					actiontarget.setFill(Color.GREEN);
+				} else {
+
+				}
+
+			}
+		});
+
+		primaryStage.show();
 	}
 
 	/**
-	 * Method initiated on start, args are the text placed after the name of the jar file
+	 * Method initiated on start
 	 * 
 	 * @param args
 	 */
 	public static void main(String[] args){
 		launch(args);
-
-		/*
-		 * Add the different options for the parser
-		 */
-		/*Options options = new Options();
-		options.addOption("bucket", true, "name of the bucket to be used");
-		options.addOption("keyfile", true, "name of the file to be used as the key");
-		options.addOption("file", true, "name of the text file to upload");
-
-		CommandLineParser parser = new DefaultParser();
-		CommandLine line;
-		String file = "";
-		String keyFile = "";
-
-		/*
-		 * Attempt to parse the arguments when the program is run from the command line
-		 * For example java -jar backupbuddy.jar -keyfile json -bucket mybucket -file mydocument.txt
-		 * This initiation would set the variable to their declared value
-		 */
-		/*try {
-			line = parser.parse(options, args);
-			BUCKET_NAME = line.getOptionValue("bucket", "datadouble");
-			keyFile = line.getOptionValue("keyfile", "json");
-			file = line.getOptionValue("file", "testfile.txt");
-		} catch (ParseException e2) {
-			logger.error("Failed to parse arguments: " + e2);
-			System.exit(1);
-		}
-
-		/*
-		 * Attempt to find the JSON key file and throw an error if not found
-		 * If found, authenticate with the Google servers
-		 */
-		/*try {
-			File key = new File(System.getProperty("user.dir") + File.separator + keyFile);
-			storageService = retrieveStorageService(key);
-			logger.info("Credentials accepted! Storage service retrieved.");
-		} catch (GeneralSecurityException e1) {
-			logger.error("Credentials not accepted: " + e1.getMessage());
-		} catch (IOException e2){
-			logger.error("Key File not found or no permission: " + e2.getMessage());
-		}
-
-		/*
-		 * Try to upload the defined file as a plain text file to the Storage service
-		 * 
-		 */
-		/*try {
-			File upload = new File(System.getProperty("user.dir") + File.separator + file);
-			uploadStream(file, null, new FileInputStream(upload), BUCKET_NAME);
-			logger.info("File upload accepeted!");
-		} catch (GeneralSecurityException e) {
-			logger.error("File not uploaded: " + e.getMessage());
-		} catch (IOException e2){
-			logger.error("Uploading file not found or no permission: " + e2.getMessage());
-		}*/
-
-
 
 	}
 
@@ -359,5 +424,10 @@ public class BackupBuddy extends Application {
 	private static void configureFileChooser(final FileChooser fileChooser) {      
 		fileChooser.setTitle("Select...");
 		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+	}
+	
+	public static void sendActionMessage(Text target, String st, Color color){
+		target.setText(st);
+		target.setFill(color);
 	}
 }
