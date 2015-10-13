@@ -1,32 +1,10 @@
-
-*.mp4
-
-json
-
-*.log
-
 .project
 
 .classpath
 
 *.prefs
 
-*.lst
+target
 
-*.class
 
-target/backupbuddy-1.0.jar
-
-target/maven-archiver/pom.properties
-
-key
-
-test.gif
-
-testtext
-
-*.jar
-
-target/classes/log4j2.xml
-
-dependency-reduced-pom.xml
+*.log

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="150.0" prefWidth="400.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="ninja.oakley.backupbuddy.controllers.AddProjectScreenController">
+  <children>
+    <VBox layoutX="14.0" layoutY="14.0" prefHeight="39.0" prefWidth="372.0">
+      <children>
+        <Label text="JSON Key" />
+        <HBox prefHeight="24.0" prefWidth="372.0" spacing="10.0">
+          <children>
+            <TextField fx:id="jsonKeyField" prefWidth="321.0" />
+            <Button mnemonicParsing="false" onAction="#onOpenFileChooser" text="..." />
+          </children>
+        </HBox>
+      </children>
+    </VBox>
+    <VBox layoutX="14.0" layoutY="56.0" prefHeight="39.0" prefWidth="372.0">
+      <children>
+        <Label text="Project ID" />
+        <TextField fx:id="projectIdField" prefWidth="321.0" />
+      </children>
+    </VBox>
+    <Button layoutX="312.0" layoutY="109.0" mnemonicParsing="false" onAction="#onConfirm" text="Confirm" />
+  </children>
+</AnchorPane>

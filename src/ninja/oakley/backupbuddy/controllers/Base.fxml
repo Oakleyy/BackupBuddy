@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.collections.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="250.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="ninja.oakley.backupbuddy.controllers.BaseScreenController">
+  <children>
+    <HBox layoutX="14.0" layoutY="14.0" prefHeight="30.0" prefWidth="222.0" spacing="0.0">
+      <children>
+        <Label prefHeight="22.0" prefWidth="154.0" text="Bucket Buddy">
+          <font>
+            <Font name="Courier New" size="15.0" />
+          </font>
+        </Label>
+        <Button minWidth="30.0" mnemonicParsing="false" onAction="#onSettingsClick" prefWidth="82.0" text="Settings" />
+      </children>
+    </HBox>
+    <ListView fx:id="fileList" layoutX="14.0" layoutY="136.0" prefHeight="225.0" prefWidth="222.0" />
+    <VBox layoutX="14.0" layoutY="44.0" prefHeight="40.0" prefWidth="222.0">
+      <children>
+        <Label text="Project" />
+        <HBox prefHeight="30.0" prefWidth="222.0" spacing="10.0">
+          <children>
+            <ComboBox id="accountComboBox" fx:id="projectComboBox" onAction="#onProjectSelect" prefWidth="185.0" promptText="Select a project..." />
+            <Button mnemonicParsing="false" onAction="#onAddProject" text="+" />
+          </children>
+        </HBox>
+      </children>
+    </VBox>
+    <VBox layoutX="14.0" layoutY="88.0" prefHeight="40.0" prefWidth="222.0">
+      <children>
+        <Label text="Bucket" />
+        <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+          <children>
+            <ComboBox fx:id="bucketComboBox" onAction="#onBucketSelect" prefWidth="185.0" promptText="Select a bucket..." />
+            <Button mnemonicParsing="false" onAction="#onAddBucket" text="+" />
+          </children>
+        </HBox>
+      </children>
+    </VBox>
+    <HBox layoutX="14.0" layoutY="369.0" minHeight="16.0" prefHeight="22.0" prefWidth="222.0" spacing="10.0">
+      <children>
+        <ProgressBar fx:id="progressBar" prefHeight="21.0" prefWidth="122.0" progress="0.0" />
+        <SplitMenuButton fx:id="actionMenu" minHeight="16.0" mnemonicParsing="false" onAction="#onActionSelect" prefHeight="30.0" prefWidth="89.0" text="Action">
+          <font>
+            <Font size="12.0" />
+          </font>
+        </SplitMenuButton>
+      </children>
+    </HBox>
+  </children>
+</AnchorPane>
