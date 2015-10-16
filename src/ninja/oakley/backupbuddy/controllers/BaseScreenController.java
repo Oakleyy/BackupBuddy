@@ -1,5 +1,6 @@
 package ninja.oakley.backupbuddy.controllers;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -21,8 +22,10 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SplitMenuButton;
+import javafx.stage.FileChooser;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.BucketManager;
+import ninja.oakley.backupbuddy.UploadRequest;
 
 public class BaseScreenController implements Initializable {
 
@@ -31,6 +34,7 @@ public class BaseScreenController implements Initializable {
 
 	private String prevProject;
 	private String prevBucket;
+	private FileChooser fileChooser;
 
 	@FXML
 	private ComboBox<String> projectComboBox;
@@ -42,7 +46,7 @@ public class BaseScreenController implements Initializable {
 	private ListView<String> fileList;
 
 	@FXML
-	private ProgressBar progressBar;
+	public ProgressBar progressBar;
 
 	@FXML
 	private SplitMenuButton actionMenu;
@@ -50,10 +54,9 @@ public class BaseScreenController implements Initializable {
 	public BaseScreenController(BackupBuddy instance){
 		this.instance = instance;
 	}
-	
+
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-
 	}
 
 	@FXML
@@ -64,7 +67,7 @@ public class BaseScreenController implements Initializable {
 	@FXML
 	public void onProjectSelect(){
 		String current = projectComboBox.getValue();
-		
+
 		if(current == null || current.isEmpty() || current.equalsIgnoreCase(prevProject)){
 			return;
 		}
@@ -74,9 +77,9 @@ public class BaseScreenController implements Initializable {
 			logger.error("No BucketManager exists for " + current);
 			return;
 		}
-		
+
 		setCurrentBucketManager(bucketManager);
-		
+
 		try {
 			updateBucketList();
 		} catch (IOException e) {
@@ -86,7 +89,7 @@ public class BaseScreenController implements Initializable {
 			logger.error("Couldn't authenticate " + e);
 			return;
 		}
-		
+
 		prevProject = current;
 
 	}
@@ -104,11 +107,11 @@ public class BaseScreenController implements Initializable {
 	@FXML
 	public void onBucketSelect(){
 		String currentValue = bucketComboBox.getValue();
-		
+
 		if(currentValue == null || currentValue.isEmpty() || currentValue.equalsIgnoreCase(prevBucket)){
 			return;
 		}
-		
+
 		try {
 			updateFileList();
 		} catch (IOException e) {
@@ -118,7 +121,7 @@ public class BaseScreenController implements Initializable {
 			logger.error("Couldn't authenticate " + e);
 			return;
 		}
-		
+
 		prevBucket = currentValue;
 	}
 
@@ -128,12 +131,63 @@ public class BaseScreenController implements Initializable {
 			logger.warn("Secondary window already being used.");
 			return;
 		}
-		
-		
+
 	}
 
 	@FXML
 	public void onActionSelect(){
+
+	}
+
+	@FXML
+	public void onUploadSelect(){
+
+		String bucketName = getCurrentBucket();
+		if(bucketName == null || bucketName.isEmpty()){
+			logger.error("No bucket selected.");
+			return;
+		}
+
+		BucketManager manager = getCurrentBucketManager();
+		if(manager == null){
+			logger.error("No project is selected.");
+			return;
+		}
+
+		if(fileChooser == null) fileChooser = new FileChooser();
+		BackupBuddy.configureFileChooser(fileChooser);
+		List<File> list = fileChooser.showOpenMultipleDialog(instance.getPrimaryStage());
+
+		if(!manager.isUploadThreadAlive()){
+			manager.startUploadThread(instance);
+		}
+
+		if(list == null || list.isEmpty()){
+			return;
+		}
+
+		ListIterator<File> iter = list.listIterator();
+		while(iter.hasNext()){
+			File file = iter.next();
+			
+			if(file == null){
+				return;
+			}
+
+			UploadRequest req = new UploadRequest(file.toPath(), bucketName);
+			manager.getUploadThread().addUploadRequest(req);
+			logger.info("Request for upload: " + file.getAbsolutePath());
+		}
+
+	}
+
+	@FXML
+	public void onDownloadSelect(){
+
+	}
+
+	@FXML
+	public void onRefreshSelect(){
 
 	}
 
@@ -143,13 +197,17 @@ public class BaseScreenController implements Initializable {
 			projectComboBox.setValue(bucketManager.getProjectId());
 			return;
 		}
-		
+
 	}
 
 	public BucketManager getCurrentBucketManager(){
 		return instance.getProjects().get(projectComboBox.getValue());
 	}
-	
+
+	public String getCurrentBucket(){
+		return bucketComboBox.getValue();
+	}
+
 
 	public void updateProjectList(){
 		ObservableList<String> items = FXCollections.observableArrayList(instance.getProjects().keySet());
@@ -168,21 +226,21 @@ public class BaseScreenController implements Initializable {
 
 		bucketComboBox.setItems(items);
 	}
-	
+
 	public void updateFileList() throws IOException, GeneralSecurityException {
 		String currentBucket = bucketComboBox.getValue();
 		List<StorageObject> files = getCurrentBucketManager().listBucket(currentBucket);
-		
+
 		ObservableList<String> items = FXCollections.observableArrayList();
 		ListIterator<StorageObject> iter = files.listIterator();
 		while(iter.hasNext()){
 			StorageObject file = iter.next();
 			items.add(file.getName());
 		}
-		
+
 		fileList.setItems(items);
 	}
-	
+
 	public void clearFileList(){
 		ObservableList<String> items = FXCollections.observableArrayList();
 		fileList.setItems(items);

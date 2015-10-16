@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.collections.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="400.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="ninja.oakley.backupbuddy.controller.AddBucketScreenController">
+  <children>
+    <VBox layoutX="14.0" layoutY="14.0" prefHeight="135.0" prefWidth="372.0" spacing="10.0">
+      <children>
+        <VBox prefHeight="39.0" prefWidth="372.0">
+          <children>
+            <Label text="Bucket Name" />
+            <TextField id="bucketName" fx:id="bucketNameField" prefWidth="200.0" />
+          </children>
+        </VBox>
+        <VBox prefHeight="22.0" prefWidth="372.0">
+          <children>
+            <Label text="Type" />
+            <ChoiceBox fx:id="typeChoiceBox" prefWidth="372.0">
+              <items>
+                <FXCollections fx:factory="observableArrayList">
+                  <String fx:value="Item 1" />
+                  <String fx:value="Item 2" />
+                  <String fx:value="Item 3" />
+                </FXCollections>
+              </items>
+            </ChoiceBox>
+          </children>
+        </VBox>
+        <VBox prefHeight="39.0" prefWidth="372.0">
+          <children>
+            <Label text="Region" />
+            <ChoiceBox fx:id="regionChoiceBox" prefWidth="372.0">
+              <items>
+                <FXCollections fx:factory="observableArrayList">
+                  <String fx:value="Item 1" />
+                  <String fx:value="Item 2" />
+                  <String fx:value="Item 3" />
+                </FXCollections>
+              </items>
+            </ChoiceBox>
+          </children>
+        </VBox>
+      </children>
+    </VBox>
+    <Button alignment="CENTER" contentDisplay="LEFT" layoutX="303.0" layoutY="165.0" mnemonicParsing="false" onAction="#onConfirm" prefWidth="83.0" text="Confirm" textAlignment="LEFT" />
+  </children>
+</AnchorPane>

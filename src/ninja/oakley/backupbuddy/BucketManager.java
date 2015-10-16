@@ -1,5 +1,7 @@
 package ninja.oakley.backupbuddy;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -9,6 +11,7 @@ import java.util.List;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.json.JsonFactory;
@@ -24,11 +27,12 @@ import com.google.api.services.storage.model.StorageObject;
 public class BucketManager {
 
 	private Storage storageService;
-	private String projectId;;
+	private String projectId;
 	private JsonFactory jsonFactory;
 	private HttpTransport httpTransport;
 	private InputStream credentialInputStream;
 
+	private UploadThread uploadThread;
 
 	private BucketManager(BucketManager.Builder builder){
 		this.projectId = builder.projectId;
@@ -36,7 +40,7 @@ public class BucketManager {
 		this.httpTransport = builder.httpTransport;
 		this.credentialInputStream = builder.credentialInputStream;
 	}
-
+	
 	public String getProjectId(){
 		return this.projectId;
 	}
@@ -106,9 +110,9 @@ public class BucketManager {
 	 * @throws IOException
 	 * @throws GeneralSecurityException
 	 */
-	public void uploadStream(String bucketName, String name, String contentType, InputStream stream) throws IOException, GeneralSecurityException {
-		InputStreamContent contentStream = new InputStreamContent(contentType, stream);
-
+	public void uploadStream(String bucketName, String name, String contentType, File file, MediaHttpUploaderProgressListener listener) throws IOException, GeneralSecurityException {
+		InputStreamContent contentStream = new InputStreamContent(contentType, new FileInputStream(file));
+		contentStream.setLength(file.length());
 		/*
 		 * Sets the metadata such as name, access permissions, etc.
 		 */
@@ -116,7 +120,8 @@ public class BucketManager {
 				.setAcl(Arrays.asList(new ObjectAccessControl().setEntity("allUsers").setRole("READER")));
 
 		Storage.Objects.Insert insertRequest = getStorage().objects().insert(bucketName, objectMetadata, contentStream);
-
+		
+		insertRequest.getMediaHttpUploader().setProgressListener(listener);
 		insertRequest.execute();
 	}
 
@@ -149,6 +154,22 @@ public class BucketManager {
 
 	public boolean isConstructed(){
 		return (storageService != null ? true : false);
+	}
+	
+	public void startUploadThread(BackupBuddy instance){
+		uploadThread = new UploadThread(instance, this);
+		uploadThread.start();
+	}
+	
+	public UploadThread getUploadThread(){
+		return uploadThread;
+	}
+	
+	public boolean isUploadThreadAlive(){
+		if(uploadThread != null && uploadThread.isAlive()){
+			return true;
+		}
+		return false;
 	}
 
 	private HttpTransport getHttpTransport() throws GeneralSecurityException, IOException {
