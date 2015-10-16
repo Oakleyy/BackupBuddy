@@ -20,7 +20,6 @@
         <Button minWidth="30.0" mnemonicParsing="false" onAction="#onSettingsClick" prefWidth="82.0" text="Settings" />
       </children>
     </HBox>
-    <ListView fx:id="fileList" layoutX="14.0" layoutY="136.0" prefHeight="225.0" prefWidth="222.0" />
     <VBox layoutX="14.0" layoutY="44.0" prefHeight="40.0" prefWidth="222.0">
       <children>
         <Label text="Project" />
@@ -58,5 +57,6 @@
         </SplitMenuButton>
       </children>
     </HBox>
+    <TreeView fx:id="fileList" layoutX="13.0" layoutY="144.0" prefHeight="214.0" prefWidth="222.0" />
   </children>
 </AnchorPane>

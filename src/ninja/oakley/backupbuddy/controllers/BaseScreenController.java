@@ -19,9 +19,10 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SplitMenuButton;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.stage.FileChooser;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.BucketManager;
@@ -43,7 +44,7 @@ public class BaseScreenController implements Initializable {
 	private ComboBox<String> bucketComboBox;
 
 	@FXML
-	private ListView<String> fileList;
+	private TreeView<String> fileList;
 
 	@FXML
 	public ProgressBar progressBar;
@@ -231,19 +232,20 @@ public class BaseScreenController implements Initializable {
 		String currentBucket = bucketComboBox.getValue();
 		List<StorageObject> files = getCurrentBucketManager().listBucket(currentBucket);
 
-		ObservableList<String> items = FXCollections.observableArrayList();
+		TreeItem<String> root = new TreeItem<String>();
 		ListIterator<StorageObject> iter = files.listIterator();
 		while(iter.hasNext()){
 			StorageObject file = iter.next();
-			items.add(file.getName());
+			TreeItem<String> item = new TreeItem<String>();
+			item.setValue(file.getName());
+			root.getChildren().add(item);
 		}
-
-		fileList.setItems(items);
+		fileList.setShowRoot(false);
+		fileList.setRoot(root);
 	}
 
 	public void clearFileList(){
-		ObservableList<String> items = FXCollections.observableArrayList();
-		fileList.setItems(items);
+		fileList.setRoot(new TreeItem<String>());
 	}
 
 }
