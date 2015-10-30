@@ -1,7 +1,6 @@
 package ninja.oakley.backupbuddy;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.BlockingQueue;
@@ -21,7 +20,7 @@ public class UploadThread extends Thread {
 	private BackupBuddy instance;
 
 	private BlockingQueue<UploadRequest> uploadQueue;
-	private boolean alive = false;
+	private volatile boolean alive = false;
 
 	public UploadThread(BackupBuddy instance, BucketManager manager){
 		this.instance = instance;

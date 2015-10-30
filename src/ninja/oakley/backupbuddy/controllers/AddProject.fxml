@@ -5,6 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
 
 <AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="150.0" prefWidth="400.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="ninja.oakley.backupbuddy.controllers.AddProjectScreenController">
   <children>
@@ -25,6 +26,8 @@
         <TextField fx:id="projectIdField" prefWidth="321.0" />
       </children>
     </VBox>
-    <Button layoutX="312.0" layoutY="109.0" mnemonicParsing="false" onAction="#onConfirm" text="Confirm" />
+    <Button alignment="CENTER" cancelButton="false" contentDisplay="LEFT" defaultButton="false" layoutX="249.0" layoutY="115.0" mnemonicParsing="false" text="Test" />
+    <Button layoutX="306.0" layoutY="115.0" mnemonicParsing="false" onAction="#onConfirm" prefWidth="-1.0" text="Confirm" />
+    <Text fx:id="errorText" layoutX="111.0" layoutY="130.0" scaleX="7.85564413155261" scaleY="1.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" visible="false" />
   </children>
 </AnchorPane>

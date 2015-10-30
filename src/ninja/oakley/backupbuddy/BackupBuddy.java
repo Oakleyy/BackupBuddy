@@ -13,6 +13,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import ninja.oakley.backupbuddy.controllers.AddBucketScreenController;
 import ninja.oakley.backupbuddy.controllers.AddProjectScreenController;
@@ -32,7 +33,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class BackupBuddy extends Application {
 
-	private static final Logger logger = LogManager.getLogger("BackupBuddy");
+	private static final Logger logger = LogManager.getLogger(BackupBuddy.class);
 	private static final String APPLICATION_NAME = "Backup Buddy/1.2";
 
 	private ConcurrentHashMap<String, BucketManager> accounts = new ConcurrentHashMap<String, BucketManager>();
@@ -42,6 +43,7 @@ public class BackupBuddy extends Application {
 
 	private Stage primaryStage;
 	private Stage secondaryStage;
+	private Stage queueStage;
 
 	private AddProjectScreenController addProjectController;
 	public Pane addProjectPane;
@@ -105,6 +107,8 @@ public class BackupBuddy extends Application {
 	public static void main(String[] args) {
 		Application.launch(args);
 	}
+	
+	
 
 	public static void sendActionMessage(Text target, String st, Color color){
 		target.setText(st);

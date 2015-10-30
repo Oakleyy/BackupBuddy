@@ -4,10 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ResourceBundle;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,9 +23,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.BucketManager;
@@ -58,6 +63,8 @@ public class BaseScreenController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
+		fileList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		fileList.setShowRoot(false);
 	}
 
 	@FXML
@@ -144,14 +151,14 @@ public class BaseScreenController implements Initializable {
 	public void onUploadSelect(){
 
 		String bucketName = getCurrentBucket();
-		if(bucketName == null || bucketName.isEmpty()){
-			logger.error("No bucket selected.");
+		if(isBucketSelected()){
+			logger.debug("No bucket selected.");
 			return;
 		}
 
 		BucketManager manager = getCurrentBucketManager();
 		if(manager == null){
-			logger.error("No project is selected.");
+			logger.debug("No project is selected.");
 			return;
 		}
 
@@ -170,14 +177,14 @@ public class BaseScreenController implements Initializable {
 		ListIterator<File> iter = list.listIterator();
 		while(iter.hasNext()){
 			File file = iter.next();
-			
+
 			if(file == null){
 				return;
 			}
 
 			UploadRequest req = new UploadRequest(file.toPath(), bucketName);
 			manager.getUploadThread().addUploadRequest(req);
-			logger.info("Request for upload: " + file.getAbsolutePath());
+			logger.debug("Request for upload: " + file.getAbsolutePath());
 		}
 
 	}
@@ -185,11 +192,48 @@ public class BaseScreenController implements Initializable {
 	@FXML
 	public void onDownloadSelect(){
 
+		String bucketName = getCurrentBucket();
+		if(isBucketSelected()){
+			logger.debug("No bucket selected.");
+			return;
+		}
+
+		BucketManager manager = getCurrentBucketManager();
+		if(manager == null){
+			logger.debug("No project is selected.");
+			return;
+		}
+
+		List<TreeItem<String>> selected = fileList.getSelectionModel().getSelectedItems();
+
+		if(selected == null ||selected.isEmpty()){
+			logger.debug("No files selected for download.");
+			return;
+		}
+
+		DirectoryChooser dirChooser = new DirectoryChooser();
+		dirChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+		dirChooser.setTitle("Select a save location...");
+		File saveLocation = dirChooser.showDialog(instance.getPrimaryStage().getOwner());
+
+		if(saveLocation == null || !saveLocation.isDirectory()){
+			logger.debug("No directory selected.");
+			return;
+		}
+
+
+
 	}
 
 	@FXML
 	public void onRefreshSelect(){
 
+
+	}
+
+	private boolean isBucketSelected(){
+		String bucketName = getCurrentBucket();
+		return (bucketName == null || bucketName.isEmpty());
 	}
 
 	public void setCurrentBucketManager(BucketManager bucketManager){
@@ -231,17 +275,55 @@ public class BaseScreenController implements Initializable {
 	public void updateFileList() throws IOException, GeneralSecurityException {
 		String currentBucket = bucketComboBox.getValue();
 		List<StorageObject> files = getCurrentBucketManager().listBucket(currentBucket);
-
-		TreeItem<String> root = new TreeItem<String>();
-		ListIterator<StorageObject> iter = files.listIterator();
-		while(iter.hasNext()){
-			StorageObject file = iter.next();
-			TreeItem<String> item = new TreeItem<String>();
-			item.setValue(file.getName());
-			root.getChildren().add(item);
-		}
-		fileList.setShowRoot(false);
+		TreeItem<String> root = organize(files);
 		fileList.setRoot(root);
+	}
+
+	private TreeItem<String> organize(List<StorageObject> files){
+		ListIterator<StorageObject> iter = files.listIterator();
+		TreeItem<String> root = new TreeItem<String>();
+		Map<String, TreeItem<String>> paths = new HashMap<>();
+
+		while(iter.hasNext()){
+			StorageObject next = iter.next();
+			String st = next.getName();
+			
+			if(!st.contains("/")){
+				root.getChildren().add(new TreeItem<String>(st));
+				continue;
+			}
+
+			int index = st.lastIndexOf('/');
+			int indexS = st.lastIndexOf('/', index - 1);
+			
+			String folderName = st.substring(indexS < 0 ? 0 : indexS + 1, index);
+			if(!st.endsWith("/")){
+				String path = st.substring(0, index + 1);
+				String name = st.substring(index + 1);
+
+				TreeItem<String> folder = paths.getOrDefault(path, new TreeItem<String>(folderName));
+				folder.getChildren().add(new TreeItem<String>(name));
+				continue;
+			}
+			paths.putIfAbsent(st, new TreeItem<String>(folderName));
+		}
+
+		Iterator<Entry<String, TreeItem<String>>> set = paths.entrySet().iterator();
+		while(set.hasNext()){
+			Entry<String, TreeItem<String>> next = set.next();
+			String path = next.getKey();
+
+			int index = path.lastIndexOf('/', path.length() - 2);
+			if(index >= 0){
+				String shortPath = path.substring(0, index + 1);
+				TreeItem<String> folder = paths.get(shortPath);
+				folder.getChildren().add(next.getValue());
+				continue;
+			}
+			root.getChildren().add(next.getValue());
+		}
+
+		return root;
 	}
 
 	public void clearFileList(){

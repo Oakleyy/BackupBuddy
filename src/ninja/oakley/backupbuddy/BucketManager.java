@@ -5,9 +5,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
+
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.NoSuchPaddingException;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -123,6 +131,16 @@ public class BucketManager {
 		
 		insertRequest.getMediaHttpUploader().setProgressListener(listener);
 		insertRequest.execute();
+	}
+	
+	public GZIPInputStream compressStream(InputStream stream) throws IOException{
+		return new GZIPInputStream(stream);
+	}
+	
+	public CipherInputStream encryptStream(InputStream stream, PublicKey key) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException{
+		Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+		rsaCipher.init(Cipher.ENCRYPT_MODE, key);
+		return new CipherInputStream(stream, rsaCipher);
 	}
 
 	public List<Bucket> getBuckets() throws IOException, GeneralSecurityException{
