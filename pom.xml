@@ -43,17 +43,6 @@
 					</execution>
 				</executions>
 			</plugin>
-<<<<<<< Updated upstream
-<plugin>
-    <groupId>org.eluder.coveralls</groupId>
-    <artifactId>coveralls-maven-plugin</artifactId>
-    <version>4.0.0</version>
-    <configuration>
-        <repoToken>YjQ2vW5IcRul6CoWoIVvwjvkFbZs3eZBS</repoToken>
-    </configuration>
-</plugin>
-=======
->>>>>>> Stashed changes
 		</plugins>
 	</build>
 	<dependencies>
@@ -73,9 +62,19 @@
 			<version>2.3</version>
 		</dependency>
 		<dependency>
-			<groupId>commons-configuration</groupId>
-			<artifactId>commons-configuration</artifactId>
-			<version>1.10</version>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.16</version>
 		</dependency>
 	</dependencies>
+	<ciManagement>
+		<url>https://build.oakley.ninja</url>
+		<system>Jenkins</system>
+	</ciManagement>
+	<issueManagement>
+		<url>https://github.com/Oakleyy/BackupBuddy/issues</url>
+		<system>Github Issues</system>
+	</issueManagement>
+	<name>BackupBuddy</name>
+	<url>https://oakley.ninja</url>
 </project>

@@ -42,6 +42,8 @@ public class AddProjectScreenController implements Initializable {
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		fileChooser = new FileChooser();
+		fileChooser.setTitle("Select...");
+		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
 	}
 
 	@FXML
@@ -101,7 +103,6 @@ public class AddProjectScreenController implements Initializable {
 
 	@FXML
 	public void onOpenFileChooser(){
-		BackupBuddy.configureFileChooser(fileChooser);
 		File file = fileChooser.showOpenDialog(instance.getSecondaryStage());
 		if (file != null) {
 			jsonKeyField.setText(file.getAbsolutePath());
@@ -121,7 +122,5 @@ public class AddProjectScreenController implements Initializable {
 		stage.setScene(null);
 		stage.hide();
 	}
-
-
 
 }

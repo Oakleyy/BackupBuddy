@@ -2,6 +2,7 @@ package ninja.oakley.backupbuddy;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.application.Application;
@@ -24,9 +25,10 @@ import org.apache.logging.log4j.Logger;
 
 
 /**
- * Small text-file uploading program. Uploads the data to a "bucket" on the Google Cloud servers.
- * The program is run by using the command line. You must have a Google Storage Bucket setup and 
- * have the key 
+ * Application used to upload and download large to small amount of files to and from the Google Cloud Storage Platform.
+ * JavaFX interface allows for easy selection of files to be uploaded and to choose the destination of files downloaded
+ * Authentication is done using a JSON key accessed from the Google Dev Console
+ * 
  * 
  * @author Griffin Dunn
  *
@@ -64,7 +66,8 @@ public class BackupBuddy extends Application {
 	}
 
 	@Override
-	public void init() {	
+	public void init() {
+		
 		try {
 			FXMLLoader baseLoader = loadFxmlFile(BaseScreenController.class, "Base.fxml");
 			baseScreenController = new BaseScreenController(this);
@@ -107,13 +110,6 @@ public class BackupBuddy extends Application {
 	public static void main(String[] args) {
 		Application.launch(args);
 	}
-	
-	
-
-	public static void sendActionMessage(Text target, String st, Color color){
-		target.setText(st);
-		target.setFill(color);
-	}
 
 	public static FXMLLoader loadFxmlFile(Class<?> clazz, String name) throws IOException {
 		return new FXMLLoader(clazz.getResource(name));
@@ -139,10 +135,5 @@ public class BackupBuddy extends Application {
 				return obj;
 			}
 		});
-	}
-	
-	public static void configureFileChooser(final FileChooser fileChooser) {      
-		fileChooser.setTitle("Select...");
-		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
 	}
 }

@@ -63,6 +63,10 @@ public class BaseScreenController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
+		fileChooser = new FileChooser();
+		fileChooser.setTitle("Select Files...");
+		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+		
 		fileList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		fileList.setShowRoot(false);
 	}
@@ -162,16 +166,13 @@ public class BaseScreenController implements Initializable {
 			return;
 		}
 
-		if(fileChooser == null) fileChooser = new FileChooser();
-		BackupBuddy.configureFileChooser(fileChooser);
 		List<File> list = fileChooser.showOpenMultipleDialog(instance.getPrimaryStage());
+		if(list == null || list.isEmpty()){
+			return;
+		}
 
 		if(!manager.isUploadThreadAlive()){
 			manager.startUploadThread(instance);
-		}
-
-		if(list == null || list.isEmpty()){
-			return;
 		}
 
 		ListIterator<File> iter = list.listIterator();
@@ -329,5 +330,5 @@ public class BaseScreenController implements Initializable {
 	public void clearFileList(){
 		fileList.setRoot(new TreeItem<String>());
 	}
-
+	
 }
