@@ -3,6 +3,7 @@ package ninja.oakley.backupbuddy.controllers;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,6 +32,8 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.BucketManager;
+import ninja.oakley.backupbuddy.DownloadRequest;
+import ninja.oakley.backupbuddy.RefreshRunnable;
 import ninja.oakley.backupbuddy.UploadRequest;
 
 public class BaseScreenController implements Initializable {
@@ -40,7 +43,9 @@ public class BaseScreenController implements Initializable {
 
 	private String prevProject;
 	private String prevBucket;
+
 	private FileChooser fileChooser;
+	private DirectoryChooser dirChooser;
 
 	@FXML
 	private ComboBox<String> projectComboBox;
@@ -66,7 +71,11 @@ public class BaseScreenController implements Initializable {
 		fileChooser = new FileChooser();
 		fileChooser.setTitle("Select Files...");
 		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-		
+
+		dirChooser = new DirectoryChooser();
+		dirChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+		dirChooser.setTitle("Select a save location...");
+
 		fileList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		fileList.setShowRoot(false);
 	}
@@ -144,11 +153,7 @@ public class BaseScreenController implements Initializable {
 			return;
 		}
 
-	}
-
-	@FXML
-	public void onActionSelect(){
-
+		instance.getAddBucketController().openWindow();
 	}
 
 	@FXML
@@ -171,10 +176,6 @@ public class BaseScreenController implements Initializable {
 			return;
 		}
 
-		if(!manager.isUploadThreadAlive()){
-			manager.startUploadThread(instance);
-		}
-
 		ListIterator<File> iter = list.listIterator();
 		while(iter.hasNext()){
 			File file = iter.next();
@@ -183,8 +184,8 @@ public class BaseScreenController implements Initializable {
 				return;
 			}
 
-			UploadRequest req = new UploadRequest(file.toPath(), bucketName);
-			manager.getUploadThread().addUploadRequest(req);
+			UploadRequest req = new UploadRequest(manager, file.toPath(), bucketName);
+			instance.getRequestManager().addRequest(req);
 			logger.debug("Request for upload: " + file.getAbsolutePath());
 		}
 
@@ -193,7 +194,6 @@ public class BaseScreenController implements Initializable {
 	@FXML
 	public void onDownloadSelect(){
 
-		String bucketName = getCurrentBucket();
 		if(isBucketSelected()){
 			logger.debug("No bucket selected.");
 			return;
@@ -207,28 +207,42 @@ public class BaseScreenController implements Initializable {
 
 		List<TreeItem<String>> selected = fileList.getSelectionModel().getSelectedItems();
 
-		if(selected == null ||selected.isEmpty()){
+		if(selected == null || selected.isEmpty()){
 			logger.debug("No files selected for download.");
 			return;
 		}
 
-		DirectoryChooser dirChooser = new DirectoryChooser();
-		dirChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-		dirChooser.setTitle("Select a save location...");
 		File saveLocation = dirChooser.showDialog(instance.getPrimaryStage().getOwner());
-
 		if(saveLocation == null || !saveLocation.isDirectory()){
 			logger.debug("No directory selected.");
 			return;
 		}
 
+		ListIterator<TreeItem<String>> iter = selected.listIterator();
+		while(iter.hasNext()){
+			TreeItem<String> next = iter.next();
+			TreeItem<String> parent = next.getParent();
+			String path = "";
 
+			while(parent != null && parent != fileList.getRoot()){
+				path = parent.getValue() + "/" + path;
+				parent = parent.getParent();
+			}
+			
+			path += next.getValue();
 
+			logger.info(path);
+
+			DownloadRequest req = new DownloadRequest(manager, path, 
+					Paths.get(saveLocation.getAbsolutePath(), next.getValue()), 
+					getCurrentBucket());
+			instance.getRequestManager().addRequest(req);
+		}
 	}
-
+	
 	@FXML
 	public void onRefreshSelect(){
-
+		new Thread(new RefreshRunnable(instance));
 
 	}
 
@@ -288,7 +302,7 @@ public class BaseScreenController implements Initializable {
 		while(iter.hasNext()){
 			StorageObject next = iter.next();
 			String st = next.getName();
-			
+
 			if(!st.contains("/")){
 				root.getChildren().add(new TreeItem<String>(st));
 				continue;
@@ -296,7 +310,7 @@ public class BaseScreenController implements Initializable {
 
 			int index = st.lastIndexOf('/');
 			int indexS = st.lastIndexOf('/', index - 1);
-			
+
 			String folderName = st.substring(indexS < 0 ? 0 : indexS + 1, index);
 			if(!st.endsWith("/")){
 				String path = st.substring(0, index + 1);
@@ -330,5 +344,5 @@ public class BaseScreenController implements Initializable {
 	public void clearFileList(){
 		fileList.setRoot(new TreeItem<String>());
 	}
-	
+
 }

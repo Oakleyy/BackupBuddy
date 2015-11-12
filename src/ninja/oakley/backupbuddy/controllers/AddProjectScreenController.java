@@ -1,11 +1,8 @@
 package ninja.oakley.backupbuddy.controllers;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.ResourceBundle;
 
@@ -20,6 +17,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.BucketManager;
+import ninja.oakley.backupbuddy.Project;
+import ninja.oakley.backupbuddy.RefreshRunnable;
+import ninja.oakley.backupbuddy.SaveProjectRunnable;
 
 public class AddProjectScreenController implements Initializable {
 
@@ -30,15 +30,15 @@ public class AddProjectScreenController implements Initializable {
 	private Scene scene;
 
 	@FXML
-	private TextField jsonKeyField;
+	private TextField projectIdField;
 
 	@FXML
-	private TextField projectIdField;
+	private TextField jsonKeyField;
 
 	public AddProjectScreenController(BackupBuddy instance){
 		this.instance = instance;
 	}
-	
+
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		fileChooser = new FileChooser();
@@ -47,58 +47,46 @@ public class AddProjectScreenController implements Initializable {
 	}
 
 	@FXML
-	public void onConfirm(){
+	public void onTest(){
 
-		String jsonKeyPath = jsonKeyField.getText();
-		if(jsonKeyPath.isEmpty()){
-			logger.error("JSON key path is empty.");
+	}
+
+	@FXML
+	public void onConfirm() throws GeneralSecurityException{
+		String jsonKey = jsonKeyField.getText();
+		String projectId = projectIdField.getText();
+
+		if(jsonKey.isEmpty()){
+			logger.error("Key is empty");
 			return;
 		}
 
-		String projectId = projectIdField.getText().trim();
 		if(projectId.isEmpty()){
-			logger.error("Project ID is empty.");
+			logger.error("Project Id is empty");
 			return;
 		}
 
 		if(instance.getProjects().containsKey(projectId.toLowerCase())){
-			logger.error("Application Name already taken.");
+			logger.error("Application already used.");
 			return;
 		}
 
-		Path jsonKey = Paths.get(jsonKeyPath);
+
 		BucketManager manager;
 		try {
-			manager = new BucketManager.Builder()
-					.setProjectId(projectId)
-					.setCredentialInputStream(new FileInputStream(jsonKey.toFile()))
-					.build();
-
-			manager.constructStorageService();
-			instance.getProjects().put(projectId, manager);
-			logger.info("Success authenticating " + manager.getProjectId());
-		} catch (IOException e) {
-			logger.error("Not a valid file at: " + jsonKeyPath);
-			return;
-		} catch (GeneralSecurityException e) {
-			logger.error("Key not accepted.");
+			manager = new BucketManager.Builder(new Project(projectId, jsonKey)).build();
+		} catch (FileNotFoundException e) {
+			logger.error("Key not found.");
 			return;
 		}
-		
+
+		instance.getProjects().put(projectId, manager);
+		logger.info("Success creating " + manager.getProjectId());
+
 		closeWindow();
 
-		instance.getBaseController().updateProjectList();
-
-		instance.getBaseController().setCurrentBucketManager(manager);
-
-		try {
-			instance.getBaseController().updateBucketList();
-		} catch (IOException e) {
-			logger.error("Trouble authenticating while retrieving buckets: " + e);
-		} catch (GeneralSecurityException e) {
-			logger.error("Cannot retrieve list of Buckets: " + e);
-		}
-
+		new Thread(new SaveProjectRunnable(instance, manager.getProject())).start();
+		new Thread(new RefreshRunnable(instance)).start();
 	}
 
 	@FXML
@@ -121,6 +109,9 @@ public class AddProjectScreenController implements Initializable {
 		Stage stage = instance.getSecondaryStage();
 		stage.setScene(null);
 		stage.hide();
+
+		projectIdField.clear();
+		jsonKeyField.clear();
 	}
 
 }

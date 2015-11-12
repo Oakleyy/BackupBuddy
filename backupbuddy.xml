@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<config>
+	<accounts>
+		<account>
+			<projectId>nimble-net-95502</projectId>
+			<path>/Users/oakley/Documents/key.json</path>
+		</account>
+	</accounts>
+</config>

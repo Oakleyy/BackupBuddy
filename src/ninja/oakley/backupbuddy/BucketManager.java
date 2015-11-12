@@ -2,8 +2,11 @@ package ninja.oakley.backupbuddy;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -19,6 +22,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.googleapis.media.MediaHttpDownloaderProgressListener;
 import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
@@ -32,25 +36,33 @@ import com.google.api.services.storage.model.ObjectAccessControl;
 import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
 
+import ninja.oakley.backupbuddy.controllers.BucketClass;
+import ninja.oakley.backupbuddy.controllers.BucketLocation;
+
 public class BucketManager {
 
+	private Project project;
+
 	private Storage storageService;
-	private String projectId;
 	private JsonFactory jsonFactory;
 	private HttpTransport httpTransport;
 	private InputStream credentialInputStream;
 
-	private UploadThread uploadThread;
+	private RequestThread uploadThread;
 
 	private BucketManager(BucketManager.Builder builder){
-		this.projectId = builder.projectId;
+		this.project = builder.project;
 		this.jsonFactory = builder.jsonFactory != null ? builder.jsonFactory : JacksonFactory.getDefaultInstance();
 		this.httpTransport = builder.httpTransport;
 		this.credentialInputStream = builder.credentialInputStream;
 	}
-	
+
+	public Project getProject(){
+		return this.project;
+	}
+
 	public String getProjectId(){
-		return this.projectId;
+		return this.project.getProjectId();
 	}
 
 	/**
@@ -74,7 +86,7 @@ public class BucketManager {
 		 */
 		do {
 			objects = listRequest.execute();
-			
+
 			List<StorageObject> items = objects.getItems();
 			if(items != null){
 				rt.addAll(items);
@@ -100,11 +112,12 @@ public class BucketManager {
 		return bucketRequest.execute();
 	}
 
-	public Bucket createBucket(String name, String storageClass) throws IOException, GeneralSecurityException {
-		return getStorage().buckets().insert(name, new Bucket()
+	public Bucket createBucket(String name, BucketClass storageClass, BucketLocation location) throws IOException, GeneralSecurityException {
+		System.out.println(storageClass.toString());
+		return getStorage().buckets().insert(project.getProjectId(), new Bucket()
 				.setName(name)
-				.setLocation("US")
-				.setStorageClass(storageClass)).execute();
+				.setLocation(location.toString())
+				.setStorageClass(storageClass.toString())).execute();
 	}
 
 	/**
@@ -118,7 +131,7 @@ public class BucketManager {
 	 * @throws IOException
 	 * @throws GeneralSecurityException
 	 */
-	public void uploadStream(String bucketName, String name, String contentType, File file, MediaHttpUploaderProgressListener listener) throws IOException, GeneralSecurityException {
+	public void uploadStream(String bucketName, String name, String contentType, File file, MediaHttpUploaderProgressListener listener, Modifier... mod) throws IOException, GeneralSecurityException {
 		InputStreamContent contentStream = new InputStreamContent(contentType, new FileInputStream(file));
 		contentStream.setLength(file.length());
 		/*
@@ -128,23 +141,30 @@ public class BucketManager {
 				.setAcl(Arrays.asList(new ObjectAccessControl().setEntity("allUsers").setRole("READER")));
 
 		Storage.Objects.Insert insertRequest = getStorage().objects().insert(bucketName, objectMetadata, contentStream);
-		
+
 		insertRequest.getMediaHttpUploader().setProgressListener(listener);
 		insertRequest.execute();
 	}
-	
-	public GZIPInputStream compressStream(InputStream stream) throws IOException{
+
+	public void downloadStream(String bucketName, String name, Path save, MediaHttpDownloaderProgressListener listener) throws IOException, GeneralSecurityException{
+		Storage.Objects.Get getRequest = getStorage().objects().get(bucketName, name);
+
+		getRequest.getMediaHttpDownloader().setProgressListener(listener);
+		getRequest.executeMediaAndDownloadTo(new FileOutputStream(save.toFile()));
+	}
+
+	public GZIPInputStream compressStream(InputStream stream) throws IOException {
 		return new GZIPInputStream(stream);
 	}
-	
-	public CipherInputStream encryptStream(InputStream stream, PublicKey key) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException{
+
+	public CipherInputStream encryptStream(InputStream stream, PublicKey key) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
 		Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
 		rsaCipher.init(Cipher.ENCRYPT_MODE, key);
 		return new CipherInputStream(stream, rsaCipher);
 	}
 
 	public List<Bucket> getBuckets() throws IOException, GeneralSecurityException{
-		Storage.Buckets.List listBuckets = getStorage().buckets().list(projectId);
+		Storage.Buckets.List listBuckets = getStorage().buckets().list(getProjectId());
 		List<Bucket> rt = new ArrayList<Bucket>();
 		Buckets buckets;
 
@@ -162,27 +182,19 @@ public class BucketManager {
 		HttpTransport httpTransport = getHttpTransport();
 		GoogleCredential cred = GoogleCredential.fromStream(this.credentialInputStream, httpTransport, this.jsonFactory);
 
+
 		if (cred.createScopedRequired()) {
 			cred = cred.createScoped(StorageScopes.all());
 		}
 
-		this.storageService = new Storage.Builder(httpTransport, this.jsonFactory, cred).setApplicationName(this.projectId).build();
+		this.storageService = new Storage.Builder(httpTransport, this.jsonFactory, cred).setApplicationName(this.getProjectId()).build();
 		return storageService;
 	}
 
 	public boolean isConstructed(){
 		return (storageService != null ? true : false);
 	}
-	
-	public void startUploadThread(BackupBuddy instance){
-		uploadThread = new UploadThread(instance, this);
-		uploadThread.start();
-	}
-	
-	public UploadThread getUploadThread(){
-		return uploadThread;
-	}
-	
+
 	public boolean isUploadThreadAlive(){
 		if(uploadThread != null && uploadThread.isAlive()){
 			return true;
@@ -201,13 +213,19 @@ public class BucketManager {
 
 	public static class Builder {
 
+		private Project project;
+
 		private JsonFactory jsonFactory;
-		private String projectId;
 		private HttpTransport httpTransport;
 		private InputStream credentialInputStream;
 
 		public Builder(){
+			project = new Project();
+		}
 
+		public Builder(Project project) throws FileNotFoundException {
+			this.project = project;
+			this.credentialInputStream = project.getInputStream();
 		}
 
 		public Builder setJsonFactory(JsonFactory jsonFactory){
@@ -216,7 +234,7 @@ public class BucketManager {
 		}
 
 		public Builder setProjectId(String projectId){
-			this.projectId = projectId;
+			project.setProjectId(projectId);
 			return this;
 		}
 

@@ -8,35 +8,36 @@ import org.apache.logging.log4j.Logger;
 
 import ninja.oakley.backupbuddy.controllers.BaseScreenController;
 
-public class UpdateRunnable implements Runnable {
+public class RefreshRunnable implements Runnable {
 
-	private static final Logger logger = LogManager.getLogger(UpdateRunnable.class);
-	
+	private static final Logger logger = LogManager.getLogger(RefreshRunnable.class);
+
 	private BackupBuddy instance;
-	
-	public UpdateRunnable(BackupBuddy instance){
+
+	public RefreshRunnable(BackupBuddy instance){
 		this.instance = instance;
 	}
-	
+
 	@Override
 	public void run() {
 		BaseScreenController base = instance.getBaseController();
 		base.updateProjectList();
-		
-			try {
-				base.updateBucketList();
-			} catch (IOException | GeneralSecurityException e) {
-				logger.error("Error updating bucket list: " + e);
-			}
 
-		
 
+		try {
+			base.updateBucketList();
+		} catch (IOException | GeneralSecurityException e) {
+			logger.error("Error updating bucket list: " + e);
+		}
+
+
+		if(base.getCurrentBucket() != null && !base.getCurrentBucket().isEmpty()){
 			try {
 				base.updateFileList();
 			} catch (IOException | GeneralSecurityException e) {
 				logger.error("Error updating file list: " + e);
 			}
-
+		}
 	}
 
 }

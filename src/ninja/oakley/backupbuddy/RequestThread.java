@@ -1,6 +1,5 @@
 package ninja.oakley.backupbuddy;
 
-import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.BlockingQueue;
@@ -10,22 +9,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javafx.scene.control.ProgressBar;
-import ninja.oakley.backupbuddy.controllers.UploadProgressListener;
 
-public class UploadThread extends Thread {
+public class RequestThread extends Thread {
 
-	private static final Logger logger = LogManager.getLogger(UploadThread.class);
+	private static final Logger logger = LogManager.getLogger(RequestThread.class);
 	
-	private BucketManager manager;
 	private BackupBuddy instance;
 
-	private BlockingQueue<UploadRequest> uploadQueue;
+	private BlockingQueue<Request> queue;
 	private volatile boolean alive = false;
 
-	public UploadThread(BackupBuddy instance, BucketManager manager){
+	public RequestThread(BackupBuddy instance){
 		this.instance = instance;
-		this.manager = manager;
-		this.uploadQueue = new LinkedBlockingQueue<UploadRequest>();
+		this.queue = new LinkedBlockingQueue<Request>();
 	}
 
 	@Override
@@ -34,18 +30,11 @@ public class UploadThread extends Thread {
 		ProgressBar bar = instance.getBaseController().progressBar;
 
 		while(alive){
-
 			try {
-				UploadRequest req = uploadQueue.take();
-				File file = req.getFile();
-
-				manager.uploadStream(req.getBucketName(), 
-						file.getName(), 
-						req.getContentType(), 
-						file, 
-						new UploadProgressListener(bar));
+				Request req = queue.take();
+				req.setProgressBar(bar);
 				
-				
+				req.execute();
 			} catch (InterruptedException e) {
 				alive = false;
 				return;
@@ -57,12 +46,20 @@ public class UploadThread extends Thread {
 		}
 	}
 
-	public void addUploadRequest(UploadRequest req){
-		uploadQueue.add(req);
+	public int getQueueLength(){
+		return queue.size();
+	}
+	
+	public void addRequest(Request req){
+		queue.add(req);
 	}
 	
 	public boolean isRunning(){
 		return this.alive;
+	}
+	
+	public void setAlive(boolean alive){
+		this.alive = alive;
 	}
 
 }

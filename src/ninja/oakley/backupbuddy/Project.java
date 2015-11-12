@@ -4,20 +4,20 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Project {
 
-	private String nickName;
-	private String projectId;
-	
+	private String projectId;	
 	private Path filePath;
 
-	public String getNickName() {
-		return nickName;
+	public Project(String projectId, String path){
+		this.projectId = projectId;
+		this.filePath = Paths.get(path);
 	}
 
-	public void setNickName(String nickName) {
-		this.nickName = nickName;
+	public Project(){
+
 	}
 
 	public String getProjectId() {
@@ -35,9 +35,9 @@ public class Project {
 	public void setFilePath(Path filePath) {
 		this.filePath = filePath;
 	}
-	
+
 	public InputStream getInputStream() throws FileNotFoundException{
 		return new FileInputStream(filePath.toFile());
 	}
-	
+
 }

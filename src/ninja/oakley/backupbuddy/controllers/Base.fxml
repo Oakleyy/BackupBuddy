@@ -45,7 +45,7 @@
     <HBox layoutX="14.0" layoutY="369.0" minHeight="16.0" prefHeight="22.0" prefWidth="222.0" spacing="10.0">
       <children>
         <ProgressBar fx:id="progressBar" blendMode="DARKEN" cache="false" depthTest="INHERIT" prefHeight="21.0" prefWidth="122.0" progress="0.0" />
-        <SplitMenuButton fx:id="actionMenu" minHeight="16.0" mnemonicParsing="false" onAction="#onActionSelect" prefHeight="30.0" prefWidth="89.0" text="Action">
+        <SplitMenuButton fx:id="actionMenu" minHeight="16.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="89.0" text="Action">
           <font>
             <Font size="12.0" />
           </font>

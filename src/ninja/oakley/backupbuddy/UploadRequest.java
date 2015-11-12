@@ -4,13 +4,20 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 
-public class UploadRequest {
+import javafx.scene.control.ProgressBar;
+import ninja.oakley.backupbuddy.controllers.UploadDownloadProgressListener;
 
+public class UploadRequest implements Request {
+
+	private BucketManager manager;
 	private Path filePath;
 	private String bucketName;
+	private ProgressBar bar;
 	
-	public UploadRequest(Path filePath, String bucketName){
+	public UploadRequest(BucketManager manager, Path filePath, String bucketName){
+		this.manager = manager;
 		this.filePath = filePath;
 		this.bucketName = bucketName;
 	}
@@ -31,5 +38,20 @@ public class UploadRequest {
 		return Files.probeContentType(filePath);
 	}
 	
+	public BucketManager getBucketManager(){
+		return manager;
+	}
+	
+	public void setProgressBar(ProgressBar bar){
+		this.bar = bar;
+	}
+	
+	public void execute() throws IOException, GeneralSecurityException{
+		manager.uploadStream(getBucketName(), 
+				getFile().getName(), 
+				getContentType(), 
+				getFile(), 
+				new UploadDownloadProgressListener(bar));
+	}
 	
 }
