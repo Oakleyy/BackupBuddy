@@ -82,8 +82,8 @@ public class BaseScreenController implements Initializable {
     }
 
     @FXML
-    public void onSettingsClick() {
-
+    public void onQueueClick() {
+        instance.getQueueController().openWindow();
     }
 
     @FXML

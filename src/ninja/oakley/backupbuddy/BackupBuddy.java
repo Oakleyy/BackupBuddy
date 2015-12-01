@@ -12,12 +12,15 @@ import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import ninja.oakley.backupbuddy.configuration.ConfigurationManager;
 import ninja.oakley.backupbuddy.configuration.LoadConfigurationRunnable;
 import ninja.oakley.backupbuddy.controllers.AddBucketScreenController;
 import ninja.oakley.backupbuddy.controllers.AddProjectScreenController;
 import ninja.oakley.backupbuddy.controllers.BaseScreenController;
+import ninja.oakley.backupbuddy.controllers.QueueScreenController;
+import ninja.oakley.backupbuddy.encryption.EncryptionManager;
 import ninja.oakley.backupbuddy.project.BucketManager;
 import ninja.oakley.backupbuddy.queue.RequestManager;
 
@@ -35,16 +38,17 @@ import ninja.oakley.backupbuddy.queue.RequestManager;
 public class BackupBuddy extends Application {
 
     private static final Logger logger = LogManager.getLogger(BackupBuddy.class);
-    private static final String APPLICATION_NAME = "Backup Buddy/1.3";
+    private static final String APPLICATION_NAME = "Backup Buddy/1.4";
 
     private volatile ConcurrentHashMap<String, BucketManager> accounts = new ConcurrentHashMap<String, BucketManager>();
 
     private ConfigurationManager configurationManager;
     private RequestManager requestManager;
+    private EncryptionManager encryptionManager;
 
     private Stage primaryStage;
     private Stage secondaryStage;
-    // private Stage queueStage;
+    private Stage queueStage;
 
     private BaseScreenController baseScreenController;
     private AnchorPane baseAnchorPane;
@@ -54,6 +58,9 @@ public class BackupBuddy extends Application {
 
     private AddBucketScreenController addBucketController;
     public Pane addBucketPane;
+    
+    private QueueScreenController queueScreenController;
+    public Pane queuePane;
 
     /**
      * Initializes the Application and loads various configuration files and
@@ -80,6 +87,11 @@ public class BackupBuddy extends Application {
             addBucketController = new AddBucketScreenController(this);
             setController(addBucketLoader, addBucketController);
             addBucketPane = (Pane) addBucketLoader.load();
+            
+            FXMLLoader queueLoader = loadFxmlFile(QueueScreenController.class, "Queue.fxml");
+            queueScreenController = new QueueScreenController(this);
+            setController(queueLoader, queueScreenController);
+            queuePane = (Pane) queueLoader.load();
 
         } catch (IOException e) {
             logger.error("Failed to load FXML file: " + e);
@@ -88,8 +100,10 @@ public class BackupBuddy extends Application {
         configurationManager = new ConfigurationManager(this);
         new Thread(new LoadConfigurationRunnable(this)).start();
 
-        requestManager = new RequestManager(this);
+        requestManager = new RequestManager();
         requestManager.createThreads(requestManager.getMaxThreads(), false);
+
+        encryptionManager = new EncryptionManager(this);
     }
 
     /**
@@ -162,6 +176,10 @@ public class BackupBuddy extends Application {
     public BaseScreenController getBaseController() {
         return baseScreenController;
     }
+    
+    public QueueScreenController getQueueController() {
+        return queueScreenController;
+    }
 
     /**
      * Get a secondary stage, which initializes lazily Used for screens that
@@ -185,6 +203,16 @@ public class BackupBuddy extends Application {
      */
     public Stage getPrimaryStage() {
         return primaryStage;
+    }
+    
+    public Stage getQueueStage() {
+        if (queueStage == null) {
+            queueStage = new Stage();
+            queueStage.setResizable(false);
+            queueStage.initStyle(StageStyle.UTILITY);
+        }
+
+        return queueStage;
     }
 
     /**
@@ -233,5 +261,9 @@ public class BackupBuddy extends Application {
      */
     public RequestManager getRequestManager() {
         return requestManager;
+    }
+
+    public EncryptionManager getEncryptionManager(){
+        return encryptionManager;
     }
 }

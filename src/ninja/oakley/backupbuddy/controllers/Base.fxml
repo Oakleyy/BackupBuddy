@@ -17,7 +17,7 @@
             <Font name="Courier New" size="15.0" />
           </font>
         </Label>
-        <Button minWidth="30.0" mnemonicParsing="false" onAction="#onSettingsClick" prefWidth="82.0" text="Settings" />
+        <Button minWidth="30.0" mnemonicParsing="false" onAction="#onQueueClick" prefWidth="82.0" text="Queue" />
       </children>
     </HBox>
     <VBox layoutX="14.0" layoutY="44.0" prefHeight="40.0" prefWidth="222.0">

@@ -7,27 +7,25 @@ import com.google.api.client.googleapis.media.MediaHttpDownloaderProgressListene
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
 
-import javafx.scene.control.ProgressBar;
+import ninja.oakley.backupbuddy.queue.Request;
 
-public class UploadDownloadProgressListener
-        implements MediaHttpUploaderProgressListener, MediaHttpDownloaderProgressListener {
+public class UploadDownloadProgressListener implements MediaHttpUploaderProgressListener, MediaHttpDownloaderProgressListener {
 
-    private ProgressBar progressBar;
-
-    public UploadDownloadProgressListener(ProgressBar progressBar) {
-        this.progressBar = progressBar;
+    private Request request;    
+    
+    public UploadDownloadProgressListener(Request request) {
+        this.request = request;
     }
 
     @Override
     public void progressChanged(MediaHttpUploader uploader) throws IOException {
         double progress = uploader.getProgress();
-        progressBar.setProgress(progress);
+        request.setProgress(progress);
     }
 
     @Override
     public void progressChanged(MediaHttpDownloader downloader) throws IOException {
         double progress = downloader.getProgress();
-        progressBar.setProgress(progress);
+        request.setProgress(progress);
     }
-
 }

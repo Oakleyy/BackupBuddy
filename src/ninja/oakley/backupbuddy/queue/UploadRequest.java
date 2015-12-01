@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 
-import javafx.scene.control.ProgressBar;
 import ninja.oakley.backupbuddy.UploadDownloadProgressListener;
 import ninja.oakley.backupbuddy.project.BucketManager;
 
@@ -15,7 +14,7 @@ public class UploadRequest implements Request {
     private BucketManager manager;
     private Path filePath;
     private String bucketName;
-    private ProgressBar bar;
+    private double progress;
 
     public UploadRequest(BucketManager manager, Path filePath, String bucketName) {
         this.manager = manager;
@@ -42,16 +41,26 @@ public class UploadRequest implements Request {
     public BucketManager getBucketManager() {
         return manager;
     }
-
+    
     @Override
-    public void setProgressBar(ProgressBar bar) {
-        this.bar = bar;
+    public double getProgress(){
+        return this.progress;
+    }
+    
+    @Override
+    public void setProgress(double progress){
+        this.progress = progress;
     }
 
     @Override
     public void execute() throws IOException, GeneralSecurityException {
         manager.uploadStream(getBucketName(), getFile().getName(), getContentType(), getFile(),
-                new UploadDownloadProgressListener(bar));
+                new UploadDownloadProgressListener(this));
+    }
+    
+    @Override
+    public String toString(){
+        return filePath.toFile().getName();
     }
 
 }
