@@ -22,22 +22,23 @@ import com.google.api.services.storage.model.StorageObject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import ninja.oakley.backupbuddy.BackupBuddy;
-import ninja.oakley.backupbuddy.RefreshRunnable;
+import ninja.oakley.backupbuddy.PreRefreshRunnable;
 import ninja.oakley.backupbuddy.project.BucketManager;
 import ninja.oakley.backupbuddy.queue.DownloadRequest;
 import ninja.oakley.backupbuddy.queue.UploadRequest;
 
-public class BaseScreenController implements Initializable {
+public class BaseScreenController extends AbstractScreenController {
 
     private static final Logger logger = LogManager.getLogger(BaseScreenController.class);
     private BackupBuddy instance;
@@ -102,15 +103,7 @@ public class BaseScreenController implements Initializable {
 
         setCurrentBucketManager(bucketManager);
 
-        try {
-            updateBucketList();
-        } catch (IOException e) {
-            logger.error("Couldn't load authentication " + e);
-            return;
-        } catch (GeneralSecurityException e) {
-            logger.error("Couldn't authenticate " + e);
-            return;
-        }
+        refresh();
 
         prevProject = current;
 
@@ -134,15 +127,7 @@ public class BaseScreenController implements Initializable {
             return;
         }
 
-        try {
-            updateFileList();
-        } catch (IOException e) {
-            logger.error("Couldn't load authentication " + e);
-            return;
-        } catch (GeneralSecurityException e) {
-            logger.error("Couldn't authenticate " + e);
-            return;
-        }
+        refresh();
 
         prevBucket = currentValue;
     }
@@ -240,10 +225,14 @@ public class BaseScreenController implements Initializable {
         }
     }
 
+    public void refresh() {
+        new Thread(new PreRefreshRunnable(instance)).start();
+        ;
+    }
+
     @FXML
     public void onRefreshSelect() {
-        new Thread(new RefreshRunnable(instance));
-
+        refresh();
     }
 
     private boolean isBucketSelected() {
@@ -273,7 +262,11 @@ public class BaseScreenController implements Initializable {
         projectComboBox.setItems(items);
     }
 
-    public void updateBucketList() throws IOException, GeneralSecurityException {
+    public void setBucketList(ObservableList<String> items) {
+        bucketComboBox.setItems(items);
+    }
+
+    public ObservableList<String> updateBucketList() throws IOException, GeneralSecurityException {
         ObservableList<String> items = FXCollections.observableArrayList();
         List<Bucket> buckets = getCurrentBucketManager().getBuckets();
         ListIterator<Bucket> iter = buckets.listIterator();
@@ -283,14 +276,17 @@ public class BaseScreenController implements Initializable {
             items.add(bucket.getName());
         }
 
-        bucketComboBox.setItems(items);
+        return items;
     }
 
-    public void updateFileList() throws IOException, GeneralSecurityException {
+    public void setFileList(TreeItem<String> files) {
+        fileList.setRoot(files);
+    }
+
+    public TreeItem<String> updateFileList() throws IOException, GeneralSecurityException {
         String currentBucket = bucketComboBox.getValue();
         List<StorageObject> files = getCurrentBucketManager().listBucket(currentBucket);
-        TreeItem<String> root = organize(files);
-        fileList.setRoot(root);
+        return organize(files);
     }
 
     private TreeItem<String> organize(List<StorageObject> files) {
@@ -342,6 +338,13 @@ public class BaseScreenController implements Initializable {
 
     public void clearFileList() {
         fileList.setRoot(new TreeItem<String>());
+    }
+
+    @Override
+    public void load() throws IOException {
+        FXMLLoader baseLoader = loadFxmlFile(BaseScreenController.class, "Base.fxml");
+        setController(baseLoader, this);
+        basePane = (AnchorPane) baseLoader.load();
     }
 
 }

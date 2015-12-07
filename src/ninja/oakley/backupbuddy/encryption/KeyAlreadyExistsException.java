@@ -3,7 +3,7 @@ package ninja.oakley.backupbuddy.encryption;
 public class KeyAlreadyExistsException extends Exception {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = -7818568077488899050L;
 
@@ -28,6 +28,5 @@ public class KeyAlreadyExistsException extends Exception {
     public KeyAlreadyExistsException(Throwable cause) {
         super(cause);
     }
-    
 
 }

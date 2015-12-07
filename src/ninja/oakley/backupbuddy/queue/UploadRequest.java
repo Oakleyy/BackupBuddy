@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 
+import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.UploadDownloadProgressListener;
 import ninja.oakley.backupbuddy.project.BucketManager;
 
@@ -41,25 +42,25 @@ public class UploadRequest implements Request {
     public BucketManager getBucketManager() {
         return manager;
     }
-    
+
     @Override
-    public double getProgress(){
-        return this.progress;
+    public double getProgress() {
+        return progress;
     }
-    
+
     @Override
-    public void setProgress(double progress){
+    public void setProgress(double progress) {
         this.progress = progress;
     }
 
     @Override
-    public void execute() throws IOException, GeneralSecurityException {
+    public void execute(BackupBuddy instance) throws IOException, GeneralSecurityException {
         manager.uploadStream(getBucketName(), getFile().getName(), getContentType(), getFile(),
-                new UploadDownloadProgressListener(this));
+                new UploadDownloadProgressListener(this, instance));
     }
-    
+
     @Override
-    public String toString(){
+    public String toString() {
         return filePath.toFile().getName();
     }
 

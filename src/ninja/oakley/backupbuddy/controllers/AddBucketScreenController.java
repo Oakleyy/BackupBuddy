@@ -11,18 +11,18 @@ import org.apache.logging.log4j.Logger;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import ninja.oakley.backupbuddy.BackupBuddy;
-import ninja.oakley.backupbuddy.RefreshRunnable;
 import ninja.oakley.backupbuddy.project.BucketClass;
 import ninja.oakley.backupbuddy.project.BucketLocation;
 import ninja.oakley.backupbuddy.project.BucketManager;
 
-public class AddBucketScreenController implements Initializable {
+public class AddBucketScreenController extends AbstractScreenController {
 
     private static final Logger logger = LogManager.getLogger(AddBucketScreenController.class);
     private BackupBuddy instance;
@@ -93,12 +93,12 @@ public class AddBucketScreenController implements Initializable {
         }
 
         closeWindow();
-        new Thread(new RefreshRunnable(instance)).start();
+        instance.getBaseController().refresh();
     }
 
     public void openWindow() {
         if (scene == null) {
-            scene = new Scene(instance.addBucketPane);
+            scene = new Scene(getBasePane());
         }
 
         Stage stage = instance.getSecondaryStage();
@@ -114,6 +114,13 @@ public class AddBucketScreenController implements Initializable {
         bucketNameField.clear();
         typeChoiceBox.setValue("");
         regionChoiceBox.setValue("");
+    }
+
+    @Override
+    public void load() throws IOException {
+        FXMLLoader addBucketLoader = loadFxmlFile(AddBucketScreenController.class, "AddBucket.fxml");
+        setController(addBucketLoader, this);
+        basePane = (Pane) addBucketLoader.load();
     }
 
 }

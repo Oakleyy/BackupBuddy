@@ -7,13 +7,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.util.Callback;
 import ninja.oakley.backupbuddy.configuration.ConfigurationManager;
 import ninja.oakley.backupbuddy.configuration.LoadConfigurationRunnable;
 import ninja.oakley.backupbuddy.controllers.AddBucketScreenController;
@@ -51,16 +47,9 @@ public class BackupBuddy extends Application {
     private Stage queueStage;
 
     private BaseScreenController baseScreenController;
-    private AnchorPane baseAnchorPane;
-
     private AddProjectScreenController addProjectController;
-    public Pane addProjectPane;
-
     private AddBucketScreenController addBucketController;
-    public Pane addBucketPane;
-    
     private QueueScreenController queueScreenController;
-    public Pane queuePane;
 
     /**
      * Initializes the Application and loads various configuration files and
@@ -73,25 +62,17 @@ public class BackupBuddy extends Application {
     @Override
     public void init() {
         try {
-            FXMLLoader baseLoader = loadFxmlFile(BaseScreenController.class, "Base.fxml");
             baseScreenController = new BaseScreenController(this);
-            setController(baseLoader, baseScreenController);
-            baseAnchorPane = (AnchorPane) baseLoader.load();
+            baseScreenController.load();
 
-            FXMLLoader addProjectLoader = loadFxmlFile(AddProjectScreenController.class, "AddProject.fxml");
             addProjectController = new AddProjectScreenController(this);
-            setController(addProjectLoader, addProjectController);
-            addProjectPane = (Pane) addProjectLoader.load();
+            addProjectController.load();
 
-            FXMLLoader addBucketLoader = loadFxmlFile(AddBucketScreenController.class, "AddBucket.fxml");
             addBucketController = new AddBucketScreenController(this);
-            setController(addBucketLoader, addBucketController);
-            addBucketPane = (Pane) addBucketLoader.load();
-            
-            FXMLLoader queueLoader = loadFxmlFile(QueueScreenController.class, "Queue.fxml");
+            addBucketController.load();
+
             queueScreenController = new QueueScreenController(this);
-            setController(queueLoader, queueScreenController);
-            queuePane = (Pane) queueLoader.load();
+            queueScreenController.load();
 
         } catch (IOException e) {
             logger.error("Failed to load FXML file: " + e);
@@ -100,7 +81,7 @@ public class BackupBuddy extends Application {
         configurationManager = new ConfigurationManager(this);
         new Thread(new LoadConfigurationRunnable(this)).start();
 
-        requestManager = new RequestManager();
+        requestManager = new RequestManager(this);
         requestManager.createThreads(requestManager.getMaxThreads(), false);
 
         encryptionManager = new EncryptionManager(this);
@@ -119,7 +100,7 @@ public class BackupBuddy extends Application {
         primaryStage.setResizable(false);
         primaryStage.setTitle(APPLICATION_NAME);
 
-        Scene scene = new Scene(baseAnchorPane);
+        Scene scene = new Scene(baseScreenController.getBasePane());
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -176,7 +157,12 @@ public class BackupBuddy extends Application {
     public BaseScreenController getBaseController() {
         return baseScreenController;
     }
-    
+
+    /**
+     * Used to control the queue window
+     *
+     * @return queue controller
+     */
     public QueueScreenController getQueueController() {
         return queueScreenController;
     }
@@ -204,7 +190,12 @@ public class BackupBuddy extends Application {
     public Stage getPrimaryStage() {
         return primaryStage;
     }
-    
+
+    /**
+     * Get the queue stage which shows the progress of requests
+     *
+     * @return queue stage
+     */
     public Stage getQueueStage() {
         if (queueStage == null) {
             queueStage = new Stage();
@@ -213,35 +204,6 @@ public class BackupBuddy extends Application {
         }
 
         return queueStage;
-    }
-
-    /**
-     * Get the FXMLLoader for a specific file
-     *
-     * @param clazz
-     *            class you want to search from
-     * @param name
-     *            of the file
-     * @return FXMLLoader loaded from file
-     * @throws IOException
-     */
-    private static FXMLLoader loadFxmlFile(Class<?> clazz, String name) throws IOException {
-        return new FXMLLoader(clazz.getResource(name));
-    }
-
-    /**
-     * Allows you to initialize your own controller for an FXML file
-     *
-     * @return loader with the controller assigned
-     */
-    private static FXMLLoader setController(FXMLLoader loader, Object obj) {
-        loader.setControllerFactory(new Callback<Class<?>, Object>() {
-            @Override
-            public Object call(Class<?> paramClass) {
-                return obj;
-            }
-        });
-        return loader;
     }
 
     /**
@@ -263,7 +225,13 @@ public class BackupBuddy extends Application {
         return requestManager;
     }
 
-    public EncryptionManager getEncryptionManager(){
+    /**
+     * Get the encryption manager to encrypt and decrypt files. Also used to
+     * load private keys.
+     *
+     * @return encryption manager
+     */
+    public EncryptionManager getEncryptionManager() {
         return encryptionManager;
     }
 }

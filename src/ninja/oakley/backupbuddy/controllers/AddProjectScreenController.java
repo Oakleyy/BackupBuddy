@@ -2,6 +2,7 @@ package ninja.oakley.backupbuddy.controllers;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.ResourceBundle;
@@ -10,18 +11,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import ninja.oakley.backupbuddy.BackupBuddy;
-import ninja.oakley.backupbuddy.RefreshRunnable;
 import ninja.oakley.backupbuddy.SaveProjectRunnable;
 import ninja.oakley.backupbuddy.project.BucketManager;
 import ninja.oakley.backupbuddy.project.Project;
 
-public class AddProjectScreenController implements Initializable {
+public class AddProjectScreenController extends AbstractScreenController {
 
     private static final Logger logger = LogManager.getLogger(AddProjectScreenController.class);
     private BackupBuddy instance;
@@ -35,7 +36,7 @@ public class AddProjectScreenController implements Initializable {
     @FXML
     private TextField jsonKeyField;
 
-    public AddProjectScreenController(BackupBuddy instance) {
+    public AddProjectScreenController(BackupBuddy instance) throws IOException {
         this.instance = instance;
     }
 
@@ -85,7 +86,7 @@ public class AddProjectScreenController implements Initializable {
         closeWindow();
 
         new Thread(new SaveProjectRunnable(instance, manager.getProject())).start();
-        new Thread(new RefreshRunnable(instance)).start();
+        instance.getBaseController().refresh();
     }
 
     @FXML
@@ -98,7 +99,7 @@ public class AddProjectScreenController implements Initializable {
 
     public void openWindow() {
         if (scene == null) {
-            scene = new Scene(instance.addProjectPane);
+            scene = new Scene(getBasePane());
         }
 
         Stage stage = instance.getSecondaryStage();
@@ -113,6 +114,13 @@ public class AddProjectScreenController implements Initializable {
 
         projectIdField.clear();
         jsonKeyField.clear();
+    }
+
+    @Override
+    public void load() throws IOException {
+        FXMLLoader addProjectLoader = loadFxmlFile(AddProjectScreenController.class, "AddProject.fxml");
+        setController(addProjectLoader, this);
+        basePane = (Pane) addProjectLoader.load();
     }
 
 }

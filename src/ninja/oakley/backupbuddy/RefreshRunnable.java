@@ -1,41 +1,41 @@
 package ninja.oakley.backupbuddy;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import javafx.collections.ObservableList;
+import javafx.scene.control.TreeItem;
 import ninja.oakley.backupbuddy.controllers.BaseScreenController;
 
 public class RefreshRunnable implements Runnable {
 
-    private static final Logger logger = LogManager.getLogger(RefreshRunnable.class);
-
     private BackupBuddy instance;
 
-    public RefreshRunnable(BackupBuddy instance) {
+    private TreeItem<String> files;
+    private ObservableList<String> buckets;
+    private boolean updateProjects;
+
+    public RefreshRunnable(BackupBuddy instance, TreeItem<String> files, ObservableList<String> buckets,
+            boolean updateProjects) {
         this.instance = instance;
+        this.files = files;
+        this.buckets = buckets;
+        this.updateProjects = updateProjects;
     }
 
     @Override
     public void run() {
-        BaseScreenController base = instance.getBaseController();
-        base.updateProjectList();
+        BaseScreenController cont = instance.getBaseController();
 
-        try {
-            base.updateBucketList();
-        } catch (IOException | GeneralSecurityException e) {
-            logger.error("Error updating bucket list: " + e);
+        if (files != null) {
+            cont.setFileList(files);
         }
 
-        if (base.getCurrentBucket() != null && !base.getCurrentBucket().isEmpty()) {
-            try {
-                base.updateFileList();
-            } catch (IOException | GeneralSecurityException e) {
-                logger.error("Error updating file list: " + e);
-            }
+        if (buckets != null) {
+            cont.setBucketList(buckets);
         }
+
+        if (updateProjects) {
+            cont.updateProjectList();
+        }
+
     }
 
 }

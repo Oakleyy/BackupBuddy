@@ -4,13 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
+import javafx.application.Platform;
+import ninja.oakley.backupbuddy.BackupBuddy;
+
 public class RequestManager {
+
+    private BackupBuddy instance;
 
     private List<RequestThread> threads = new ArrayList<>();
     private int maxThreads = 5;
 
-    public RequestManager() {
-        
+    public RequestManager(BackupBuddy instance) {
+        this.instance = instance;
     }
 
     public void createThreads(int amount, boolean start) {
@@ -26,24 +31,34 @@ public class RequestManager {
     }
 
     public RequestThread createThread() {
-        RequestThread rt = new RequestThread();
+        RequestThread rt = new RequestThread(instance);
         threads.add(rt);
         return rt;
     }
 
     public void addRequest(Request req) {
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    instance.getQueueController().addItem(req);
+                }
+            });
+        } else {
+            instance.getQueueController().addItem(req);
+        }
         getLeastPopulatedThread().addRequest(req);
     }
-    
+
     public RequestThread getLeastPopulatedThread() {
         List<RequestThread> sorted = new ArrayList<>(threads);
-        sorted.sort(new RequestThread());
+        sorted.sort(new RequestThread(null));
         RequestThread lowest = sorted.get(0);
 
         if (!lowest.isAlive()) {
             lowest.start();
         }
-        
+
         return lowest;
     }
 

@@ -37,7 +37,6 @@ import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
 
 import ninja.oakley.backupbuddy.queue.Modifier;
-import ninja.oakley.backupbuddy.queue.RequestThread;
 
 public class BucketManager {
 
@@ -47,8 +46,6 @@ public class BucketManager {
     private JsonFactory jsonFactory;
     private HttpTransport httpTransport;
     private InputStream credentialInputStream;
-
-    private RequestThread uploadThread;
 
     private BucketManager(BucketManager.Builder builder) {
         project = builder.project;
@@ -197,13 +194,6 @@ public class BucketManager {
 
     public boolean isConstructed() {
         return storageService != null ? true : false;
-    }
-
-    public boolean isUploadThreadAlive() {
-        if (uploadThread != null && uploadThread.isAlive()) {
-            return true;
-        }
-        return false;
     }
 
     private HttpTransport getHttpTransport() throws GeneralSecurityException, IOException {

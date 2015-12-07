@@ -13,12 +13,11 @@ public class RequestCell extends ListCell<Request> {
     private Text text = new Text();
     private HBox hBox = new HBox();
 
-    public RequestCell(){
+    public RequestCell() {
         hBox.getChildren().addAll(text, progressBar);
         hBox.setAlignment(Pos.CENTER);
         hBox.setSpacing(10);
     }
-
 
     @Override
     protected void updateItem(Request request, boolean empty) {

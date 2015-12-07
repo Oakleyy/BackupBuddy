@@ -9,14 +9,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ninja.oakley.backupbuddy.BackupBuddy;
+
 public class RequestThread extends Thread implements Comparator<RequestThread> {
 
     private static final Logger logger = LogManager.getLogger(RequestThread.class);
+    private BackupBuddy instance;
 
     private BlockingQueue<Request> queue;
     private volatile boolean alive = false;
 
-    public RequestThread() {
+    public RequestThread(BackupBuddy instance) {
+        setDaemon(true);
+        this.instance = instance;
         queue = new LinkedBlockingQueue<Request>();
     }
 
@@ -28,7 +33,7 @@ public class RequestThread extends Thread implements Comparator<RequestThread> {
             try {
                 Request req = queue.take();
 
-                req.execute();
+                req.execute(instance);
             } catch (InterruptedException e) {
                 alive = false;
                 return;
@@ -60,7 +65,5 @@ public class RequestThread extends Thread implements Comparator<RequestThread> {
     public int compare(RequestThread o1, RequestThread o2) {
         return o1.getQueueLength() - o2.getQueueLength();
     }
-    
-
 
 }

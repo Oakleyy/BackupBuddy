@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 
+import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.UploadDownloadProgressListener;
 import ninja.oakley.backupbuddy.project.BucketManager;
 
@@ -23,14 +24,14 @@ public class DownloadRequest implements Request {
     }
 
     @Override
-    public void execute() throws IOException, GeneralSecurityException {
-        manager.downloadStream(bucketName, file, savePath, new UploadDownloadProgressListener(this));
+    public void execute(BackupBuddy instance) throws IOException, GeneralSecurityException {
+        manager.downloadStream(bucketName, file, savePath, new UploadDownloadProgressListener(this, instance));
 
     }
-    
+
     @Override
-    public double getProgress(){
-        return this.progress;
+    public double getProgress() {
+        return progress;
     }
 
     @Override
@@ -38,4 +39,8 @@ public class DownloadRequest implements Request {
         this.progress = progress;
     }
 
+    @Override
+    public String toString() {
+        return file;
+    }
 }
