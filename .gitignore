@@ -6,7 +6,8 @@
 
 target
 
-
 *.log
 
-java-design-patterns/
+bin
+
+.settings
