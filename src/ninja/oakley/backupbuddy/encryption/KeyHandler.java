@@ -12,6 +12,7 @@ import javax.crypto.NoSuchPaddingException;
 
 public class KeyHandler {
 
+    private String name;
     private RSAPrivateCrtKey key;
     private Path keyPath;
     private String fingerPrint;

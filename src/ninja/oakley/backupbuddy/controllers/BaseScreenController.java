@@ -3,7 +3,6 @@ package ninja.oakley.backupbuddy.controllers;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -34,11 +33,11 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.PreRefreshRunnable;
-import ninja.oakley.backupbuddy.project.BucketManager;
-import ninja.oakley.backupbuddy.queue.DownloadRequest;
+import ninja.oakley.backupbuddy.TreeItemDownloadRunnable;
+import ninja.oakley.backupbuddy.project.ProjectController;
 import ninja.oakley.backupbuddy.queue.UploadRequest;
 
-public class BaseScreenController extends AbstractScreenController {
+public class BaseScreenController extends AbstractScreenController<AnchorPane> {
 
     private static final Logger logger = LogManager.getLogger(BaseScreenController.class);
     private BackupBuddy instance;
@@ -80,6 +79,7 @@ public class BaseScreenController extends AbstractScreenController {
 
         fileList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         fileList.setShowRoot(false);
+        fileList.setContextMenu(instance.getContextMenuController().getBase());
     }
 
     @FXML
@@ -95,13 +95,13 @@ public class BaseScreenController extends AbstractScreenController {
             return;
         }
 
-        BucketManager bucketManager = instance.getProjects().get(current);
-        if (bucketManager == null) {
+        ProjectController controller = instance.getProjects().get(current);
+        if (controller == null) {
             logger.error("No BucketManager exists for " + current);
             return;
         }
 
-        setCurrentBucketManager(bucketManager);
+        setSelectedProjectController(controller);
 
         refresh();
 
@@ -151,8 +151,8 @@ public class BaseScreenController extends AbstractScreenController {
             return;
         }
 
-        BucketManager manager = getCurrentBucketManager();
-        if (manager == null) {
+        ProjectController controller = getSelectedProjectController();
+        if (controller == null) {
             logger.debug("No project is selected.");
             return;
         }
@@ -170,9 +170,8 @@ public class BaseScreenController extends AbstractScreenController {
                 return;
             }
 
-            UploadRequest req = new UploadRequest(manager, file.toPath(), bucketName);
-            instance.getRequestManager().addRequest(req);
-            logger.debug("Request for upload: " + file.getAbsolutePath());
+            UploadRequest req = new UploadRequest(controller, file.toPath(), bucketName);
+            instance.getRequestHandler().addRequest(req);
         }
 
     }
@@ -185,8 +184,8 @@ public class BaseScreenController extends AbstractScreenController {
             return;
         }
 
-        BucketManager manager = getCurrentBucketManager();
-        if (manager == null) {
+        ProjectController controller = getSelectedProjectController();
+        if (controller == null) {
             logger.debug("No project is selected.");
             return;
         }
@@ -204,30 +203,16 @@ public class BaseScreenController extends AbstractScreenController {
             return;
         }
 
-        ListIterator<TreeItem<String>> iter = selected.listIterator();
-        while (iter.hasNext()) {
-            TreeItem<String> next = iter.next();
-            TreeItem<String> parent = next.getParent();
-            String path = "";
+        new Thread(new TreeItemDownloadRunnable(instance, selected, saveLocation.toPath(), fileList)).start();
+    }
 
-            while (parent != null && parent != fileList.getRoot()) {
-                path = parent.getValue() + "/" + path;
-                parent = parent.getParent();
-            }
+    @FXML
+    public void onManageKeys() {
 
-            path += next.getValue();
-
-            logger.info(path);
-
-            DownloadRequest req = new DownloadRequest(manager, path,
-                    Paths.get(saveLocation.getAbsolutePath(), next.getValue()), getCurrentBucket());
-            instance.getRequestManager().addRequest(req);
-        }
     }
 
     public void refresh() {
         new Thread(new PreRefreshRunnable(instance)).start();
-        ;
     }
 
     @FXML
@@ -240,16 +225,16 @@ public class BaseScreenController extends AbstractScreenController {
         return bucketName == null || bucketName.isEmpty();
     }
 
-    public void setCurrentBucketManager(BucketManager bucketManager) {
-        if (projectComboBox.getItems().contains(bucketManager.getProjectId())
-                || instance.getProjects().containsKey(bucketManager.getProjectId())) {
-            projectComboBox.setValue(bucketManager.getProjectId());
+    public void setSelectedProjectController(ProjectController projectController) {
+        if (projectComboBox.getItems().contains(projectController.getProjectId())
+                || instance.getProjects().containsKey(projectController.getProjectId())) {
+            projectComboBox.setValue(projectController.getProjectId());
             return;
         }
 
     }
 
-    public BucketManager getCurrentBucketManager() {
+    public ProjectController getSelectedProjectController() {
         return instance.getProjects().get(projectComboBox.getValue());
     }
 
@@ -268,7 +253,7 @@ public class BaseScreenController extends AbstractScreenController {
 
     public ObservableList<String> updateBucketList() throws IOException, GeneralSecurityException {
         ObservableList<String> items = FXCollections.observableArrayList();
-        List<Bucket> buckets = getCurrentBucketManager().getBuckets();
+        List<Bucket> buckets = getSelectedProjectController().getBuckets();
         ListIterator<Bucket> iter = buckets.listIterator();
 
         while (iter.hasNext()) {
@@ -285,7 +270,7 @@ public class BaseScreenController extends AbstractScreenController {
 
     public TreeItem<String> updateFileList() throws IOException, GeneralSecurityException {
         String currentBucket = bucketComboBox.getValue();
-        List<StorageObject> files = getCurrentBucketManager().listBucket(currentBucket);
+        List<StorageObject> files = getSelectedProjectController().listBucket(currentBucket);
         return organize(files);
     }
 
@@ -299,14 +284,15 @@ public class BaseScreenController extends AbstractScreenController {
             String st = next.getName();
 
             if (!st.contains("/")) {
-                root.getChildren().add(new TreeItem<String>(st));
+                TreeItem<String> item = new TreeItem<String>(st);
+                root.getChildren().add(item);
                 continue;
             }
 
             int index = st.lastIndexOf('/');
             int indexS = st.lastIndexOf('/', index - 1);
 
-            String folderName = st.substring(indexS < 0 ? 0 : indexS + 1, index);
+            String folderName = st.substring(indexS < 0 ? 0 : indexS + 1, index + 1);
             if (!st.endsWith("/")) {
                 String path = st.substring(0, index + 1);
                 String name = st.substring(index + 1);
@@ -344,7 +330,7 @@ public class BaseScreenController extends AbstractScreenController {
     public void load() throws IOException {
         FXMLLoader baseLoader = loadFxmlFile(BaseScreenController.class, "Base.fxml");
         setController(baseLoader, this);
-        basePane = (AnchorPane) baseLoader.load();
+        base = (AnchorPane) baseLoader.load();
     }
 
 }

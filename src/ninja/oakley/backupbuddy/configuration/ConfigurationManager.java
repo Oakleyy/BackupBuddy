@@ -14,8 +14,8 @@ import org.apache.logging.log4j.Logger;
 import com.google.common.io.Files;
 
 import ninja.oakley.backupbuddy.BackupBuddy;
-import ninja.oakley.backupbuddy.project.BucketManager;
 import ninja.oakley.backupbuddy.project.Project;
+import ninja.oakley.backupbuddy.project.ProjectController;
 
 public class ConfigurationManager {
 
@@ -46,7 +46,7 @@ public class ConfigurationManager {
             String jsonKeyPath = next.getString("path");
 
             Project project = new Project(projectId, jsonKeyPath);
-            BucketManager manager = new BucketManager.Builder(project).build();
+            ProjectController manager = new ProjectController.Builder(project).build();
 
             instance.getProjects().put(manager.getProjectId(), manager);
         }

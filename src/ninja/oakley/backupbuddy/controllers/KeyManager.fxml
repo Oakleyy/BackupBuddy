@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="211.0" prefWidth="600.0000999999975" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ninja.oakley.backupbuddy.controllers.KeyManagerScreenController">
+  <children>
+    <TableView fx:id="table" layoutX="14.0" layoutY="14.0" prefHeight="157.0" prefWidth="573.0">
+      <columns>
+        <TableColumn fx:id="tableName" maxWidth="5000.0" minWidth="10.0" prefWidth="110.0" text="Name" />
+        <TableColumn fx:id="tableFingerPrint" maxWidth="5000.0" minWidth="10.0" prefWidth="92.0" text="Finger Print" />
+        <TableColumn fx:id="tableFilePath" prefWidth="75.0" text="File Path" />
+      </columns>
+    </TableView>
+    <Button layoutX="14.0" layoutY="177.0" mnemonicParsing="false" onAction="#onAddKey" text="+" />
+    <Button layoutX="55.0" layoutY="177.0" mnemonicParsing="false" onAction="#onRemoveKey" text="-" />
+  </children>
+</AnchorPane>

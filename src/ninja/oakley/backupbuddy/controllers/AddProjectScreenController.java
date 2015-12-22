@@ -19,10 +19,10 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.SaveProjectRunnable;
-import ninja.oakley.backupbuddy.project.BucketManager;
 import ninja.oakley.backupbuddy.project.Project;
+import ninja.oakley.backupbuddy.project.ProjectController;
 
-public class AddProjectScreenController extends AbstractScreenController {
+public class AddProjectScreenController extends AbstractScreenController<Pane> {
 
     private static final Logger logger = LogManager.getLogger(AddProjectScreenController.class);
     private BackupBuddy instance;
@@ -72,9 +72,9 @@ public class AddProjectScreenController extends AbstractScreenController {
             return;
         }
 
-        BucketManager manager;
+        ProjectController manager;
         try {
-            manager = new BucketManager.Builder(new Project(projectId, jsonKey)).build();
+            manager = new ProjectController.Builder(new Project(projectId, jsonKey)).build();
         } catch (FileNotFoundException e) {
             logger.error("Key not found.");
             return;
@@ -99,7 +99,7 @@ public class AddProjectScreenController extends AbstractScreenController {
 
     public void openWindow() {
         if (scene == null) {
-            scene = new Scene(getBasePane());
+            scene = new Scene(getBase());
         }
 
         Stage stage = instance.getSecondaryStage();
@@ -120,7 +120,7 @@ public class AddProjectScreenController extends AbstractScreenController {
     public void load() throws IOException {
         FXMLLoader addProjectLoader = loadFxmlFile(AddProjectScreenController.class, "AddProject.fxml");
         setController(addProjectLoader, this);
-        basePane = (Pane) addProjectLoader.load();
+        base = (Pane) addProjectLoader.load();
     }
 
 }

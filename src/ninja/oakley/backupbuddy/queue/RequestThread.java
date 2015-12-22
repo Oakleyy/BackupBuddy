@@ -38,7 +38,7 @@ public class RequestThread extends Thread implements Comparator<RequestThread> {
                 alive = false;
                 return;
             } catch (IOException e) {
-                logger.error("File not found.");
+                logger.error("File not found." + e);
             } catch (GeneralSecurityException e) {
                 logger.error("Error while uploading file.");
             }

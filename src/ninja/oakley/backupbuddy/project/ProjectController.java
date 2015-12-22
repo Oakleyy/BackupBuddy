@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
@@ -38,7 +39,7 @@ import com.google.api.services.storage.model.StorageObject;
 
 import ninja.oakley.backupbuddy.queue.Modifier;
 
-public class BucketManager {
+public class ProjectController {
 
     private Project project;
 
@@ -47,7 +48,7 @@ public class BucketManager {
     private HttpTransport httpTransport;
     private InputStream credentialInputStream;
 
-    private BucketManager(BucketManager.Builder builder) {
+    private ProjectController(ProjectController.Builder builder) {
         project = builder.project;
         jsonFactory = builder.jsonFactory != null ? builder.jsonFactory : JacksonFactory.getDefaultInstance();
         httpTransport = builder.httpTransport;
@@ -112,7 +113,6 @@ public class BucketManager {
 
     public Bucket createBucket(String name, BucketClass storageClass, BucketLocation location)
             throws IOException, GeneralSecurityException {
-        System.out.println(storageClass.toString());
         return getStorage().buckets().insert(project.getProjectId(),
                 new Bucket().setName(name).setLocation(location.toString()).setStorageClass(storageClass.toString()))
                 .execute();
@@ -129,7 +129,7 @@ public class BucketManager {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    public void uploadStream(String bucketName, String name, String contentType, File file,
+    public void uploadObject(String bucketName, String name, String contentType, File file,
             MediaHttpUploaderProgressListener listener, Modifier... mod) throws IOException, GeneralSecurityException {
         InputStreamContent contentStream = new InputStreamContent(contentType, new FileInputStream(file));
         contentStream.setLength(file.length());
@@ -141,16 +141,40 @@ public class BucketManager {
 
         Storage.Objects.Insert insertRequest = getStorage().objects().insert(bucketName, objectMetadata, contentStream);
 
+        if (file.length() > 0 && file.length() <= 2 * 1000 * 1000) {
+            insertRequest.getMediaHttpUploader().setDirectUploadEnabled(true);
+        }
+
         insertRequest.getMediaHttpUploader().setProgressListener(listener);
         insertRequest.execute();
     }
 
-    public void downloadStream(String bucketName, String name, Path save, MediaHttpDownloaderProgressListener listener)
+    public void downloadObject(String bucketName, String name, Path save, MediaHttpDownloaderProgressListener listener)
             throws IOException, GeneralSecurityException {
         Storage.Objects.Get getRequest = getStorage().objects().get(bucketName, name);
+        getRequest.getMediaHttpDownloader().setDirectDownloadEnabled(true);
 
         getRequest.getMediaHttpDownloader().setProgressListener(listener);
+
+        if (name.endsWith("/")) {
+            Files.createDirectories(save);
+            return;
+        }
+
+        Files.createDirectories(save.getParent());
         getRequest.executeMediaAndDownloadTo(new FileOutputStream(save.toFile()));
+    }
+
+    public void deleteObject(String bucketName, String name) throws IOException, GeneralSecurityException {
+        Storage.Objects.Delete deleteRequest = getStorage().objects().delete(bucketName, name);
+
+        deleteRequest.execute();
+    }
+
+    public StorageObject getObjectInfo(String bucketName, String name) throws IOException, GeneralSecurityException {
+        Storage.Objects.Get getRequest = getStorage().objects().get(bucketName, name);
+
+        return getRequest.execute();
     }
 
     public GZIPInputStream compressStream(InputStream stream) throws IOException {
@@ -241,8 +265,8 @@ public class BucketManager {
             return this;
         }
 
-        public BucketManager build() {
-            return new BucketManager(this);
+        public ProjectController build() {
+            return new ProjectController(this);
         }
 
     }

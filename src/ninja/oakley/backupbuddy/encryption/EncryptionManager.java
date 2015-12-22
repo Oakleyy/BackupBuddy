@@ -17,22 +17,15 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.codec.binary.Hex;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import ninja.oakley.backupbuddy.BackupBuddy;
 
 public class EncryptionManager {
 
-    private static final Logger logger = LogManager.getLogger(EncryptionManager.class);
-
-    private BackupBuddy instance;
     private final static String ALGORITHM = "RSA";
 
     private ConcurrentHashMap<String, KeyHandler> keys = new ConcurrentHashMap<>();
 
-    public EncryptionManager(BackupBuddy instance) {
-        this.instance = instance;
+    public EncryptionManager() {
+
     }
 
     public KeyHandler getKeyHandler(String fingerPrint) {
@@ -70,6 +63,7 @@ public class EncryptionManager {
 
     }
 
+    @SuppressWarnings("unused")
     private PublicKey loadPublicKeyFromFile(Path path)
             throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         File file = path.toFile();

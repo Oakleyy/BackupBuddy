@@ -15,10 +15,11 @@ import ninja.oakley.backupbuddy.configuration.LoadConfigurationRunnable;
 import ninja.oakley.backupbuddy.controllers.AddBucketScreenController;
 import ninja.oakley.backupbuddy.controllers.AddProjectScreenController;
 import ninja.oakley.backupbuddy.controllers.BaseScreenController;
+import ninja.oakley.backupbuddy.controllers.ContextMenuScreenController;
 import ninja.oakley.backupbuddy.controllers.QueueScreenController;
 import ninja.oakley.backupbuddy.encryption.EncryptionManager;
-import ninja.oakley.backupbuddy.project.BucketManager;
-import ninja.oakley.backupbuddy.queue.RequestManager;
+import ninja.oakley.backupbuddy.project.ProjectController;
+import ninja.oakley.backupbuddy.queue.RequestHandler;
 
 /**
  * Application used to upload and download large to small amount of files to and
@@ -36,10 +37,10 @@ public class BackupBuddy extends Application {
     private static final Logger logger = LogManager.getLogger(BackupBuddy.class);
     private static final String APPLICATION_NAME = "Backup Buddy/1.4";
 
-    private volatile ConcurrentHashMap<String, BucketManager> accounts = new ConcurrentHashMap<String, BucketManager>();
+    private volatile ConcurrentHashMap<String, ProjectController> accounts = new ConcurrentHashMap<String, ProjectController>();
 
     private ConfigurationManager configurationManager;
-    private RequestManager requestManager;
+    private RequestHandler requestHandler;
     private EncryptionManager encryptionManager;
 
     private Stage primaryStage;
@@ -50,6 +51,7 @@ public class BackupBuddy extends Application {
     private AddProjectScreenController addProjectController;
     private AddBucketScreenController addBucketController;
     private QueueScreenController queueScreenController;
+    private ContextMenuScreenController contextMenuController;
 
     /**
      * Initializes the Application and loads various configuration files and
@@ -62,8 +64,6 @@ public class BackupBuddy extends Application {
     @Override
     public void init() {
         try {
-            baseScreenController = new BaseScreenController(this);
-            baseScreenController.load();
 
             addProjectController = new AddProjectScreenController(this);
             addProjectController.load();
@@ -74,17 +74,24 @@ public class BackupBuddy extends Application {
             queueScreenController = new QueueScreenController(this);
             queueScreenController.load();
 
+            contextMenuController = new ContextMenuScreenController(this);
+            contextMenuController.load();
+
+            baseScreenController = new BaseScreenController(this);
+            baseScreenController.load();
+
         } catch (IOException e) {
             logger.error("Failed to load FXML file: " + e);
+            e.printStackTrace();
         }
 
         configurationManager = new ConfigurationManager(this);
         new Thread(new LoadConfigurationRunnable(this)).start();
 
-        requestManager = new RequestManager(this);
-        requestManager.createThreads(requestManager.getMaxThreads(), false);
+        requestHandler = new RequestHandler(this);
+        requestHandler.createThreads(requestHandler.getMaxThreads(), false);
 
-        encryptionManager = new EncryptionManager(this);
+        encryptionManager = new EncryptionManager();
     }
 
     /**
@@ -100,7 +107,7 @@ public class BackupBuddy extends Application {
         primaryStage.setResizable(false);
         primaryStage.setTitle(APPLICATION_NAME);
 
-        Scene scene = new Scene(baseScreenController.getBasePane());
+        Scene scene = new Scene(baseScreenController.getBase());
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -110,7 +117,7 @@ public class BackupBuddy extends Application {
      */
     @Override
     public void stop() {
-        requestManager.stopAllThreads();
+        requestHandler.stopAllThreads();
     }
 
     /**
@@ -127,7 +134,7 @@ public class BackupBuddy extends Application {
      *
      * @return list of BucketManagers
      */
-    public ConcurrentHashMap<String, BucketManager> getProjects() {
+    public ConcurrentHashMap<String, ProjectController> getProjects() {
         return accounts;
     }
 
@@ -167,6 +174,10 @@ public class BackupBuddy extends Application {
         return queueScreenController;
     }
 
+    public ContextMenuScreenController getContextMenuController() {
+        return contextMenuController;
+    }
+
     /**
      * Get a secondary stage, which initializes lazily Used for screens that
      * gather information
@@ -199,8 +210,9 @@ public class BackupBuddy extends Application {
     public Stage getQueueStage() {
         if (queueStage == null) {
             queueStage = new Stage();
-            queueStage.setResizable(false);
+            queueStage.setResizable(true);
             queueStage.initStyle(StageStyle.UTILITY);
+            queueStage.setAlwaysOnTop(false);
         }
 
         return queueStage;
@@ -221,8 +233,8 @@ public class BackupBuddy extends Application {
      *
      * @return request manager
      */
-    public RequestManager getRequestManager() {
-        return requestManager;
+    public RequestHandler getRequestHandler() {
+        return requestHandler;
     }
 
     /**

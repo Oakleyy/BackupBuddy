@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.input.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+
+<ContextMenu xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ninja.oakley.backupbuddy.controllers.ContextMenuScreenController">
+  <items>
+    <MenuItem mnemonicParsing="false" onAction="#onDownload" onMenuValidation="#onDownload" text="Download">
+         <accelerator>
+            <KeyCodeCombination alt="UP" code="D" control="UP" meta="UP" shift="ANY" shortcut="UP" />
+         </accelerator></MenuItem>
+      <MenuItem mnemonicParsing="false" onAction="#onDelete" onMenuValidation="#onDelete" text="Delete" />
+      <MenuItem mnemonicParsing="false" onAction="#onGetInfo" onMenuValidation="#onGetInfo" text="Get Info">
+         <accelerator>
+            <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="ANY" shortcut="UP" />
+         </accelerator>
+      </MenuItem>
+  </items>
+</ContextMenu>

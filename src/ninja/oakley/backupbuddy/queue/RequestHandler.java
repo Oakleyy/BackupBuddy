@@ -7,14 +7,14 @@ import java.util.ListIterator;
 import javafx.application.Platform;
 import ninja.oakley.backupbuddy.BackupBuddy;
 
-public class RequestManager {
+public class RequestHandler {
 
     private BackupBuddy instance;
 
     private List<RequestThread> threads = new ArrayList<>();
     private int maxThreads = 5;
 
-    public RequestManager(BackupBuddy instance) {
+    public RequestHandler(BackupBuddy instance) {
         this.instance = instance;
     }
 
@@ -37,15 +37,21 @@ public class RequestManager {
     }
 
     public void addRequest(Request req) {
-        if (!Platform.isFxApplicationThread()) {
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    instance.getQueueController().addItem(req);
-                }
-            });
-        } else {
-            instance.getQueueController().addItem(req);
+        addRequest(req, true);
+    }
+
+    public void addRequest(Request req, boolean show) {
+        if (show) {
+            if (!Platform.isFxApplicationThread()) {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        instance.getQueueController().addItem(req);
+                    }
+                });
+            } else {
+                instance.getQueueController().addItem(req);
+            }
         }
         getLeastPopulatedThread().addRequest(req);
     }

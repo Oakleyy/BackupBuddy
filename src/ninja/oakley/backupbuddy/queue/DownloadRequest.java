@@ -6,18 +6,18 @@ import java.security.GeneralSecurityException;
 
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.UploadDownloadProgressListener;
-import ninja.oakley.backupbuddy.project.BucketManager;
+import ninja.oakley.backupbuddy.project.ProjectController;
 
 public class DownloadRequest implements Request {
 
-    private BucketManager manager;
+    private ProjectController controller;
     private Path savePath;
     private String file;
     private String bucketName;
     private double progress;
 
-    public DownloadRequest(BucketManager manager, String file, Path savePath, String bucketName) {
-        this.manager = manager;
+    public DownloadRequest(ProjectController controller, String file, Path savePath, String bucketName) {
+        this.controller = controller;
         this.file = file;
         this.savePath = savePath;
         this.bucketName = bucketName;
@@ -25,7 +25,7 @@ public class DownloadRequest implements Request {
 
     @Override
     public void execute(BackupBuddy instance) throws IOException, GeneralSecurityException {
-        manager.downloadStream(bucketName, file, savePath, new UploadDownloadProgressListener(this, instance));
+        controller.downloadObject(bucketName, file, savePath, new UploadDownloadProgressListener(this, instance));
 
     }
 
@@ -41,6 +41,10 @@ public class DownloadRequest implements Request {
 
     @Override
     public String toString() {
-        return file;
+        String rt = file;
+        if (rt.contains("/")) {
+            rt = rt.substring(rt.lastIndexOf("/") + 1, rt.length());
+        }
+        return rt;
     }
 }

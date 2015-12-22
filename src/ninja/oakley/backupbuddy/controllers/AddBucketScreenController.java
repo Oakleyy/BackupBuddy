@@ -20,9 +20,9 @@ import javafx.stage.Stage;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.project.BucketClass;
 import ninja.oakley.backupbuddy.project.BucketLocation;
-import ninja.oakley.backupbuddy.project.BucketManager;
+import ninja.oakley.backupbuddy.project.ProjectController;
 
-public class AddBucketScreenController extends AbstractScreenController {
+public class AddBucketScreenController extends AbstractScreenController<Pane> {
 
     private static final Logger logger = LogManager.getLogger(AddBucketScreenController.class);
     private BackupBuddy instance;
@@ -57,12 +57,12 @@ public class AddBucketScreenController extends AbstractScreenController {
 
     @FXML
     public void onConfirm() {
-        BucketManager manager = instance.getBaseController().getCurrentBucketManager();
+        ProjectController controller = instance.getBaseController().getSelectedProjectController();
         String name = bucketNameField.getText();
         String region = regionChoiceBox.getValue();
         String type = typeChoiceBox.getValue();
 
-        if (manager == null) {
+        if (controller == null) {
             logger.error("No manager selected.");
             return;
         }
@@ -83,7 +83,7 @@ public class AddBucketScreenController extends AbstractScreenController {
         }
 
         try {
-            manager.createBucket(name, BucketClass.valueOf(type), BucketLocation.valueOf(region));
+            controller.createBucket(name, BucketClass.valueOf(type), BucketLocation.valueOf(region));
         } catch (IOException e) {
             logger.error(e.getMessage());
             return;
@@ -98,7 +98,7 @@ public class AddBucketScreenController extends AbstractScreenController {
 
     public void openWindow() {
         if (scene == null) {
-            scene = new Scene(getBasePane());
+            scene = new Scene(getBase());
         }
 
         Stage stage = instance.getSecondaryStage();
@@ -120,7 +120,7 @@ public class AddBucketScreenController extends AbstractScreenController {
     public void load() throws IOException {
         FXMLLoader addBucketLoader = loadFxmlFile(AddBucketScreenController.class, "AddBucket.fxml");
         setController(addBucketLoader, this);
-        basePane = (Pane) addBucketLoader.load();
+        base = (Pane) addBucketLoader.load();
     }
 
 }

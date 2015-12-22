@@ -4,15 +4,14 @@ import java.io.IOException;
 
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.layout.Pane;
 import javafx.util.Callback;
 
-public abstract class AbstractScreenController implements Initializable {
+public abstract class AbstractScreenController<T> implements Initializable {
 
-    protected Pane basePane;
+    protected T base;
 
-    public Pane getBasePane() {
-        return basePane;
+    public T getBase() {
+        return base;
     }
 
     public abstract void load() throws IOException;
