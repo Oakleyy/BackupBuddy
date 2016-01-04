@@ -1,13 +1,8 @@
 .project
-
 .classpath
-
 *.prefs
-
 target
-
-*.log
-
-bin
-
 .settings
+/.gradle/
+/bin/
+/logs/

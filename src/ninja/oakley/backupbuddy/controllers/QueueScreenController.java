@@ -35,7 +35,7 @@ public class QueueScreenController extends AbstractScreenController<Pane> {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         queueList.setSkin(new QueueListViewSkin<Request>(queueList));
-        queueList.getStylesheets().add(RequestCell.class.getResource("progressbar.css").toExternalForm());
+        queueList.getStylesheets().add(RequestCell.class.getResource("/javafx/progressbar.css").toExternalForm());
         queueList.setCellFactory(new Callback<ListView<Request>, ListCell<Request>>() {
             @Override
             public ListCell<Request> call(ListView<Request> list) {

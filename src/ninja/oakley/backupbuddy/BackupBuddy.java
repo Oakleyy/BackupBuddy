@@ -82,7 +82,6 @@ public class BackupBuddy extends Application {
 
         } catch (IOException e) {
             logger.error("Failed to load FXML file: " + e);
-            e.printStackTrace();
         }
 
         configurationManager = new ConfigurationManager(this);

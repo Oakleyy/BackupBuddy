@@ -1,0 +1,56 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply from: 'http://dl.bintray.com/content/shemnon/javafx-gradle/8.1.1/javafx.plugin'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.apis:google-api-services-storage:v1-rev56-1.21.0'
+    compile 'org.apache.logging.log4j:log4j-api:2.3'
+    compile 'org.apache.logging.log4j:log4j-core:2.3'
+    compile 'commons-configuration:commons-configuration:1.10'
+    compile 'commons-collections:commons-collections:3.2.1'
+
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+        resources {
+            srcDir 'resources'
+        }
+    }
+}
+
+compileJava {
+    targetCompatibility = 1.8
+    sourceCompatibility = 1.8
+}
+
+
+
+
+javafx {
+	//javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk'
+
+    appID 'backupbuddy'
+    appName 'Backup Buddy'
+    
+    mainClass 'ninja.oakley.backupbuddy.BackupBuddy'
+    
+    jvmArgs = ['-XX:+AggressiveOpts', '-XX:CompileThreshold=1']
+    systemProperties = ['prism.disableRegionCaching':'true']
+    arguments = ['-l', '--fast']
+}
+
+eclipse {
+
+  classpath {
+    downloadSources = true
+    downloadJavadoc = false
+  }
+}

@@ -27,7 +27,7 @@ public abstract class AbstractScreenController<T> implements Initializable {
      * @throws IOException
      */
     protected static FXMLLoader loadFxmlFile(Class<?> clazz, String name) throws IOException {
-        return new FXMLLoader(clazz.getResource(name));
+        return new FXMLLoader(clazz.getResource("/javafx/" + name));
     }
 
     /**
