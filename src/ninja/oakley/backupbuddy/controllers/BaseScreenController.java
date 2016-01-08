@@ -34,6 +34,7 @@ import javafx.stage.FileChooser;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.PreRefreshRunnable;
 import ninja.oakley.backupbuddy.TreeItemDownloadRunnable;
+import ninja.oakley.backupbuddy.project.CreateProjectRunnable;
 import ninja.oakley.backupbuddy.project.ProjectController;
 import ninja.oakley.backupbuddy.queue.UploadRequest;
 
@@ -111,12 +112,20 @@ public class BaseScreenController extends AbstractScreenController<AnchorPane> {
 
     @FXML
     public void onAddProject() {
-        if (instance.getSecondaryStage().isShowing()) {
+        /*if (instance.getSecondaryStage().isShowing()) {
             logger.warn("Secondary window already being used.");
             return;
         }
 
-        instance.getAddProjectController().openWindow();
+        instance.getAddProjectController().openWindow();*/
+        File sel = fileChooser.showOpenDialog(instance.getPrimaryStage());
+        
+        if(sel == null){
+            return;
+        }
+        
+        new Thread(new CreateProjectRunnable(instance, sel.toPath())).start();
+        
     }
 
     @FXML
@@ -235,7 +244,10 @@ public class BaseScreenController extends AbstractScreenController<AnchorPane> {
     }
 
     public ProjectController getSelectedProjectController() {
-        return instance.getProjects().get(projectComboBox.getValue());
+        String value = projectComboBox.getValue();
+        if(value == null) return null;
+        
+        return instance.getProjects().get(value);
     }
 
     public String getCurrentBucket() {

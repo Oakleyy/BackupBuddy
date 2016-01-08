@@ -3,7 +3,7 @@ apply plugin: 'eclipse'
 apply from: 'http://dl.bintray.com/content/shemnon/javafx-gradle/8.1.1/javafx.plugin'
 
 repositories {
-    mavenCentral()
+    mavenCentral() 
 }
 
 dependencies {
@@ -12,7 +12,7 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-core:2.3'
     compile 'commons-configuration:commons-configuration:1.10'
     compile 'commons-collections:commons-collections:3.2.1'
-
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.1.3'
 }
 
 sourceSets {
@@ -31,9 +31,6 @@ compileJava {
     sourceCompatibility = 1.8
 }
 
-
-
-
 javafx {
 	//javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_51.jdk'
 
@@ -51,6 +48,6 @@ eclipse {
 
   classpath {
     downloadSources = true
-    downloadJavadoc = false
+    downloadJavadoc = true
   }
 }

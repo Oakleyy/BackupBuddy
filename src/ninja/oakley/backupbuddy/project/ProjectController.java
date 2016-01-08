@@ -36,6 +36,7 @@ import com.google.api.services.storage.model.Buckets;
 import com.google.api.services.storage.model.ObjectAccessControl;
 import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
+import com.google.common.cache.LoadingCache;
 
 import ninja.oakley.backupbuddy.queue.Modifier;
 
@@ -47,6 +48,8 @@ public class ProjectController {
     private JsonFactory jsonFactory;
     private HttpTransport httpTransport;
     private InputStream credentialInputStream;
+    
+    private List<String> bucketCache = new ArrayList<String>();
 
     private ProjectController(ProjectController.Builder builder) {
         project = builder.project;
@@ -206,11 +209,9 @@ public class ProjectController {
     public Storage constructStorageService() throws IOException, GeneralSecurityException {
         HttpTransport httpTransport = getHttpTransport();
         GoogleCredential cred = GoogleCredential.fromStream(credentialInputStream, httpTransport, jsonFactory);
-
         if (cred.createScopedRequired()) {
             cred = cred.createScoped(StorageScopes.all());
         }
-
         storageService = new Storage.Builder(httpTransport, jsonFactory, cred).setApplicationName(getProjectId())
                 .build();
         return storageService;
@@ -226,6 +227,14 @@ public class ProjectController {
 
     private Storage getStorage() throws IOException, GeneralSecurityException {
         return storageService != null ? storageService : constructStorageService();
+    }
+
+    public List<String> getBucketCache() {
+        return bucketCache;
+    }
+
+    public void setBucketCache(List<String> bucketCache) {
+        this.bucketCache = bucketCache;
     }
 
     public static class Builder {

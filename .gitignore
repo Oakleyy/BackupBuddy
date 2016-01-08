@@ -6,3 +6,4 @@ target
 /.gradle/
 /bin/
 /logs/
+backupbuddy.xml

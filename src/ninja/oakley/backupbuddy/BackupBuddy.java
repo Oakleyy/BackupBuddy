@@ -1,25 +1,40 @@
 package ninja.oakley.backupbuddy;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.google.common.base.Strings;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
+
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import ninja.oakley.backupbuddy.configuration.ConfigurationManager;
 import ninja.oakley.backupbuddy.configuration.LoadConfigurationRunnable;
 import ninja.oakley.backupbuddy.controllers.AddBucketScreenController;
-import ninja.oakley.backupbuddy.controllers.AddProjectScreenController;
 import ninja.oakley.backupbuddy.controllers.BaseScreenController;
 import ninja.oakley.backupbuddy.controllers.ContextMenuScreenController;
 import ninja.oakley.backupbuddy.controllers.QueueScreenController;
 import ninja.oakley.backupbuddy.encryption.EncryptionManager;
 import ninja.oakley.backupbuddy.project.ProjectController;
 import ninja.oakley.backupbuddy.queue.RequestHandler;
+import ninja.oakley.backupbuddy.queue.UploadRequest;
 
 /**
  * Application used to upload and download large to small amount of files to and
@@ -38,7 +53,7 @@ public class BackupBuddy extends Application {
     private static final String APPLICATION_NAME = "Backup Buddy/1.4";
 
     private volatile ConcurrentHashMap<String, ProjectController> accounts = new ConcurrentHashMap<String, ProjectController>();
-
+    
     private ConfigurationManager configurationManager;
     private RequestHandler requestHandler;
     private EncryptionManager encryptionManager;
@@ -48,7 +63,6 @@ public class BackupBuddy extends Application {
     private Stage queueStage;
 
     private BaseScreenController baseScreenController;
-    private AddProjectScreenController addProjectController;
     private AddBucketScreenController addBucketController;
     private QueueScreenController queueScreenController;
     private ContextMenuScreenController contextMenuController;
@@ -64,13 +78,9 @@ public class BackupBuddy extends Application {
     @Override
     public void init() {
         try {
-
-            addProjectController = new AddProjectScreenController(this);
-            addProjectController.load();
-
             addBucketController = new AddBucketScreenController(this);
             addBucketController.load();
-
+            
             queueScreenController = new QueueScreenController(this);
             queueScreenController.load();
 
@@ -109,6 +119,37 @@ public class BackupBuddy extends Application {
         Scene scene = new Scene(baseScreenController.getBase());
         primaryStage.setScene(scene);
         primaryStage.show();
+        
+        scene.setOnDragOver(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent event) {
+                Dragboard db = event.getDragboard();
+                if (db.hasFiles()) {
+                    event.acceptTransferModes(TransferMode.COPY);
+                } else {
+                    event.consume();
+                }
+            }
+        });
+        
+        scene.setOnDragDropped(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent event) {
+                Dragboard db = event.getDragboard();
+                boolean success = false;
+                String bucket = getBaseController().getCurrentBucket();
+                ProjectController controller = getBaseController().getSelectedProjectController();
+                if (!Strings.isNullOrEmpty(bucket) && controller != null && db.hasFiles()) {
+                    success = true;
+                    for (File file : db.getFiles()) {
+                        UploadRequest req = new UploadRequest(controller, file.toPath(), bucket);
+                        getRequestHandler().addRequest(req);
+                    }
+                }
+                event.setDropCompleted(success);
+                event.consume();
+            }
+        });
     }
 
     /**
@@ -135,15 +176,6 @@ public class BackupBuddy extends Application {
      */
     public ConcurrentHashMap<String, ProjectController> getProjects() {
         return accounts;
-    }
-
-    /**
-     * Used to control the Add Project Window
-     *
-     * @return Project Controller
-     */
-    public AddProjectScreenController getAddProjectController() {
-        return addProjectController;
     }
 
     /**
@@ -209,7 +241,7 @@ public class BackupBuddy extends Application {
     public Stage getQueueStage() {
         if (queueStage == null) {
             queueStage = new Stage();
-            queueStage.setResizable(true);
+            queueStage.setResizable(false);
             queueStage.initStyle(StageStyle.UTILITY);
             queueStage.setAlwaysOnTop(false);
         }

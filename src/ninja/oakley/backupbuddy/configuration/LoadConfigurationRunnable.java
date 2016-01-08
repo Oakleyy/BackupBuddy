@@ -20,9 +20,19 @@ public class LoadConfigurationRunnable implements Runnable {
 
     @Override
     public void run() {
+        ConfigurationManager cm = instance.getConfigurationManager();
+        
+        if(!cm.configExists()){
+            try {
+                cm.copyNewConfigurationFile();
+            } catch (IOException e) {
+                logger.error("Error creating config file.");
+                return;
+            }
+        }
+        
         try {
-            instance.getConfigurationManager().loadProjectProfiles();
-            logger.info("Finished loading Projects.");
+            cm.loadProjectProfiles();
         } catch (ConfigurationException e) {
             logger.error("Error reading the configuration file. " + e);
         } catch (IOException e) {

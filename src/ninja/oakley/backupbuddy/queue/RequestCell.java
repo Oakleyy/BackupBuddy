@@ -17,7 +17,7 @@ public class RequestCell extends ListCell<Request> {
     public RequestCell() {
         hBox.getChildren().addAll(text, progressBar);
         hBox.setAlignment(Pos.CENTER_LEFT);
-        hBox.setSpacing(10);
+        hBox.setSpacing(5);
     }
 
     @Override
@@ -33,11 +33,19 @@ public class RequestCell extends ListCell<Request> {
                 progressBar.getStyleClass().add("green-bar");
             }
 
-            text.setText(request.toString());
-            text.setFont(Font.font(12.0));
+            text.setText(shortenString(request.toString()));
+            text.setFont(Font.font(11.0));
             setGraphic(hBox);
             setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         }
+    }
+    
+    private String shortenString(String st){
+        if(st.length() <= 16) return st;
+        
+        return st.substring(0, 14) + "...";
+        
+        
     }
 
 }

@@ -27,10 +27,12 @@ public class PreRefreshRunnable implements Runnable {
         TreeItem<String> files = null;
         ObservableList<String> buckets = null;
 
-        try {
-            buckets = base.updateBucketList();
-        } catch (IOException | GeneralSecurityException e) {
-            logger.error("Error updating bucket list: " + e);
+        if(base.getSelectedProjectController() != null){
+            try {
+                buckets = base.updateBucketList();
+            } catch (IOException | GeneralSecurityException e) {
+                logger.error("Error updating bucket list: " + e);
+            }
         }
 
         if (base.getCurrentBucket() != null && !base.getCurrentBucket().isEmpty()) {
