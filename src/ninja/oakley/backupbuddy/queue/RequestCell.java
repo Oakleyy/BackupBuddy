@@ -39,13 +39,14 @@ public class RequestCell extends ListCell<Request> {
             setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         }
     }
-    
-    private String shortenString(String st){
-        if(st.length() <= 16) return st;
-        
+
+    private String shortenString(String st) {
+        if (st.length() <= 16) {
+            return st;
+        }
+
         return st.substring(0, 14) + "...";
-        
-        
+
     }
 
 }

@@ -36,7 +36,6 @@ import com.google.api.services.storage.model.Buckets;
 import com.google.api.services.storage.model.ObjectAccessControl;
 import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
-import com.google.common.cache.LoadingCache;
 
 import ninja.oakley.backupbuddy.queue.Modifier;
 
@@ -48,7 +47,7 @@ public class ProjectController {
     private JsonFactory jsonFactory;
     private HttpTransport httpTransport;
     private InputStream credentialInputStream;
-    
+
     private List<String> bucketCache = new ArrayList<String>();
 
     private ProjectController(ProjectController.Builder builder) {

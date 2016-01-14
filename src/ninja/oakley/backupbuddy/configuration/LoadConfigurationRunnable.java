@@ -1,12 +1,13 @@
 package ninja.oakley.backupbuddy.configuration;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ninja.oakley.backupbuddy.BackupBuddy;
+import ninja.oakley.backupbuddy.project.LoadProjectsRunnable;
 
 public class LoadConfigurationRunnable implements Runnable {
 
@@ -21,22 +22,26 @@ public class LoadConfigurationRunnable implements Runnable {
     @Override
     public void run() {
         ConfigurationManager cm = instance.getConfigurationManager();
-        
-        if(!cm.configExists()){
+
+        if (!cm.configExists() || cm.isConfigBlank()) {
             try {
-                cm.copyNewConfigurationFile();
+                cm.createConfig();
             } catch (IOException e) {
                 logger.error("Error creating config file.");
-                return;
             }
+            return;
         }
-        
+
         try {
-            cm.loadProjectProfiles();
-        } catch (ConfigurationException e) {
-            logger.error("Error reading the configuration file. " + e);
-        } catch (IOException e) {
-            logger.error("Could not find the configuration file. " + e);
+            cm.loadConfig();
+        } catch (FileNotFoundException e) {
+            logger.error("Config file not found.");
+            return;
+        }
+
+        if (cm.getProjects().size() > 0) {
+            logger.info(cm.getProjects().size());
+            new Thread(new LoadProjectsRunnable(instance, cm.getProjects())).start();
         }
     }
 

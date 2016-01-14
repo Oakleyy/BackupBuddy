@@ -112,20 +112,20 @@ public class BaseScreenController extends AbstractScreenController<AnchorPane> {
 
     @FXML
     public void onAddProject() {
-        /*if (instance.getSecondaryStage().isShowing()) {
-            logger.warn("Secondary window already being used.");
+        /*
+         * if (instance.getSecondaryStage().isShowing()) { logger.warn(
+         * "Secondary window already being used."); return; }
+         *
+         * instance.getAddProjectController().openWindow();
+         */
+        File sel = fileChooser.showOpenDialog(instance.getPrimaryStage());
+
+        if (sel == null) {
             return;
         }
 
-        instance.getAddProjectController().openWindow();*/
-        File sel = fileChooser.showOpenDialog(instance.getPrimaryStage());
-        
-        if(sel == null){
-            return;
-        }
-        
         new Thread(new CreateProjectRunnable(instance, sel.toPath())).start();
-        
+
     }
 
     @FXML
@@ -245,8 +245,10 @@ public class BaseScreenController extends AbstractScreenController<AnchorPane> {
 
     public ProjectController getSelectedProjectController() {
         String value = projectComboBox.getValue();
-        if(value == null) return null;
-        
+        if (value == null) {
+            return null;
+        }
+
         return instance.getProjects().get(value);
     }
 

@@ -27,7 +27,7 @@ public class PreRefreshRunnable implements Runnable {
         TreeItem<String> files = null;
         ObservableList<String> buckets = null;
 
-        if(base.getSelectedProjectController() != null){
+        if (base.getSelectedProjectController() != null) {
             try {
                 buckets = base.updateBucketList();
             } catch (IOException | GeneralSecurityException e) {

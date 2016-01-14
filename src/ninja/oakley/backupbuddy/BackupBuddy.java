@@ -2,19 +2,12 @@ package ninja.oakley.backupbuddy;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.common.base.Strings;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableFutureTask;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
@@ -22,7 +15,6 @@ import javafx.scene.Scene;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import ninja.oakley.backupbuddy.configuration.ConfigurationManager;
@@ -53,7 +45,7 @@ public class BackupBuddy extends Application {
     private static final String APPLICATION_NAME = "Backup Buddy/1.4";
 
     private volatile ConcurrentHashMap<String, ProjectController> accounts = new ConcurrentHashMap<String, ProjectController>();
-    
+
     private ConfigurationManager configurationManager;
     private RequestHandler requestHandler;
     private EncryptionManager encryptionManager;
@@ -80,7 +72,7 @@ public class BackupBuddy extends Application {
         try {
             addBucketController = new AddBucketScreenController(this);
             addBucketController.load();
-            
+
             queueScreenController = new QueueScreenController(this);
             queueScreenController.load();
 
@@ -94,7 +86,7 @@ public class BackupBuddy extends Application {
             logger.error("Failed to load FXML file: " + e);
         }
 
-        configurationManager = new ConfigurationManager(this);
+        configurationManager = new ConfigurationManager();
         new Thread(new LoadConfigurationRunnable(this)).start();
 
         requestHandler = new RequestHandler(this);
@@ -119,7 +111,7 @@ public class BackupBuddy extends Application {
         Scene scene = new Scene(baseScreenController.getBase());
         primaryStage.setScene(scene);
         primaryStage.show();
-        
+
         scene.setOnDragOver(new EventHandler<DragEvent>() {
             @Override
             public void handle(DragEvent event) {
@@ -131,7 +123,7 @@ public class BackupBuddy extends Application {
                 }
             }
         });
-        
+
         scene.setOnDragDropped(new EventHandler<DragEvent>() {
             @Override
             public void handle(DragEvent event) {
@@ -150,6 +142,7 @@ public class BackupBuddy extends Application {
                 event.consume();
             }
         });
+
     }
 
     /**

@@ -1,79 +1,70 @@
 package ninja.oakley.backupbuddy.configuration;
 
-import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.List;
 
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.HierarchicalConfiguration;
-import org.apache.commons.configuration.XMLConfiguration;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.yaml.snakeyaml.TypeDescription;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
-import com.google.api.client.util.IOUtils;
-import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.project.Project;
-import ninja.oakley.backupbuddy.project.ProjectController;
 
 public class ConfigurationManager {
 
-    private static final Logger logger = LogManager.getLogger(ConfigurationManager.class);
+    private Configuration config;
 
-    private BackupBuddy instance;
-
-    private XMLConfiguration config;
-
-    public ConfigurationManager(BackupBuddy instance) {
-        this.instance = instance;
+    public ConfigurationManager() {
     }
 
-    public void saveProjectProfile(Project project) throws ConfigurationException, IOException {
-        getConfig().setProperty("accounts/account[projectId = " + project.getProjectId() + "]/path",
-                project.getFilePath().toString());
-        getConfig().setProperty("accounts/account[projectId = " + project.getProjectId() + "]/projectId",
-                project.getProjectId());
-        getConfig().save();
-        logger.info("Saved: " + project.getProjectId());
+    public void saveConfig() throws IOException {
+        Yaml yaml = new Yaml();
+        String dump = yaml.dump(getConfig());
+
+        Path path = Paths.get("backupbuddy.yml");
+        Files.write(path, Arrays.asList(dump), Charset.forName("UTF-8"));
     }
 
-    public void loadProjectProfiles() throws ConfigurationException, IOException {
-        Iterator<HierarchicalConfiguration> iter = getConfig().configurationsAt("accounts.account").iterator();
-        while (iter.hasNext()) {
-            HierarchicalConfiguration next = iter.next();
-            String projectId = next.getString("projectId");
-            String jsonKeyPath = next.getString("path");
+    public void loadConfig() throws FileNotFoundException {
+        Constructor cont = new Constructor(Configuration.class);
+        TypeDescription projectDesc = new TypeDescription(Project.class);
+        projectDesc.putListPropertyType("projects", Project.class);
+        cont.addTypeDescription(projectDesc);
+        Yaml yaml = new Yaml();
+        config = (Configuration) yaml.load(new FileInputStream(Paths.get("backupbuddy.yml").toFile()));
+    }
 
-            Project project = new Project(projectId, jsonKeyPath);
-            ProjectController manager = new ProjectController.Builder(project).build();
-
-            instance.getProjects().put(manager.getProjectId(), manager);
+    public void createConfig() throws IOException {
+        Path path = Paths.get("backupbuddy.yml");
+        if (!Files.exists(path)) {
+            Files.createFile(path);
         }
-        instance.getBaseController().updateProjectList();
-    }
-    
-    public void copyNewConfigurationFile() throws IOException{
-        InputStream is = this.getClass().getResourceAsStream("/default_config.xml");   
-        FileOutputStream out = new FileOutputStream("backupbuddy.xml");
-                
-        IOUtils.copy(is, out, true);
-        out.close();
-    }
-    
-    public boolean configExists(){
-        return Paths.get("backupbuddy.xml").toFile().exists();
+        config = new Configuration();
     }
 
-    private XMLConfiguration getConfig() throws IOException, ConfigurationException {
-        if (config == null) {
-            Path dir = Paths.get("backupbuddy.xml");
-            if (!dir.toFile().exists()) {
-                copyNewConfigurationFile();
-            }
-            config = new XMLConfiguration("backupbuddy.xml");
-        }
+    public boolean configExists() {
+        return Paths.get("backupbuddy.yml").toFile().exists();
+    }
+
+    public boolean isConfigBlank() {
+        return Paths.get("backupbuddy.yml").toFile().length() == 0L;
+    }
+
+    public void addProject(Project project) {
+        getConfig().getProjects().add(project);
+    }
+
+    public List<Project> getProjects() {
+        return getConfig().getProjects();
+    }
+
+    private Configuration getConfig() {
         return config;
     }
 

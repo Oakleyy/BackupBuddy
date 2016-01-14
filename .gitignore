@@ -7,3 +7,5 @@ target
 /bin/
 /logs/
 backupbuddy.xml
+
+*.yml

@@ -3,17 +3,16 @@ package ninja.oakley.backupbuddy.project;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Project {
 
     private String projectId;
-    private Path filePath;
+    private String filePath;
 
-    public Project(String projectId, String path) {
+    public Project(String projectId, String filePath) {
         this.projectId = projectId;
-        filePath = Paths.get(path);
+        this.filePath = filePath;
     }
 
     public Project() {
@@ -28,16 +27,16 @@ public class Project {
         this.projectId = projectId;
     }
 
-    public Path getFilePath() {
+    public String getFilePath() {
         return filePath;
     }
 
-    public void setFilePath(Path filePath) {
+    public void setFilePath(String filePath) {
         this.filePath = filePath;
     }
 
     public InputStream getInputStream() throws FileNotFoundException {
-        return new FileInputStream(filePath.toFile());
+        return new FileInputStream(Paths.get(filePath).toFile());
     }
 
 }
