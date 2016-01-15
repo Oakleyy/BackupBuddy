@@ -19,6 +19,7 @@ sourceSets {
         java {
             srcDir 'src'
         }
+        
         resources {
             srcDir 'resources'
         }
@@ -44,7 +45,6 @@ javafx {
 }
 
 eclipse {
-
   classpath {
     downloadSources = true
     downloadJavadoc = true

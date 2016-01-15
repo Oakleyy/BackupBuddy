@@ -112,12 +112,6 @@ public class BaseScreenController extends AbstractScreenController<AnchorPane> {
 
     @FXML
     public void onAddProject() {
-        /*
-         * if (instance.getSecondaryStage().isShowing()) { logger.warn(
-         * "Secondary window already being used."); return; }
-         *
-         * instance.getAddProjectController().openWindow();
-         */
         File sel = fileChooser.showOpenDialog(instance.getPrimaryStage());
 
         if (sel == null) {
@@ -217,7 +211,12 @@ public class BaseScreenController extends AbstractScreenController<AnchorPane> {
 
     @FXML
     public void onManageKeys() {
+        if (instance.getSecondaryStage().isShowing()) {
+            logger.warn("Secondary window already being used.");
+            return;
+        }
 
+        instance.getKeyManagerController().openWindow();
     }
 
     public void refresh() {

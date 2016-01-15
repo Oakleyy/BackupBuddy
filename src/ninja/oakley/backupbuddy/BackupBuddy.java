@@ -22,6 +22,7 @@ import ninja.oakley.backupbuddy.configuration.LoadConfigurationRunnable;
 import ninja.oakley.backupbuddy.controllers.AddBucketScreenController;
 import ninja.oakley.backupbuddy.controllers.BaseScreenController;
 import ninja.oakley.backupbuddy.controllers.ContextMenuScreenController;
+import ninja.oakley.backupbuddy.controllers.KeyManagerScreenController;
 import ninja.oakley.backupbuddy.controllers.QueueScreenController;
 import ninja.oakley.backupbuddy.encryption.EncryptionManager;
 import ninja.oakley.backupbuddy.project.ProjectController;
@@ -58,6 +59,7 @@ public class BackupBuddy extends Application {
     private AddBucketScreenController addBucketController;
     private QueueScreenController queueScreenController;
     private ContextMenuScreenController contextMenuController;
+    private KeyManagerScreenController keyManagerController;
 
     /**
      * Initializes the Application and loads various configuration files and
@@ -78,6 +80,9 @@ public class BackupBuddy extends Application {
 
             contextMenuController = new ContextMenuScreenController(this);
             contextMenuController.load();
+            
+            keyManagerController = new KeyManagerScreenController(this);
+            keyManagerController.load();
 
             baseScreenController = new BaseScreenController(this);
             baseScreenController.load();
@@ -178,6 +183,15 @@ public class BackupBuddy extends Application {
      */
     public AddBucketScreenController getAddBucketController() {
         return addBucketController;
+    }
+    
+    /**
+     * Used to control the Base Window
+     *
+     * @return base controller
+     */
+    public KeyManagerScreenController getKeyManagerController() {
+        return keyManagerController;
     }
 
     /**
