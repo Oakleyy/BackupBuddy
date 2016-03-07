@@ -6,4 +6,4 @@ JavaFX Application for uploading files to Google Cloud Storage
 ## Goals
 
 ##YourKit Java Profiler
-Thank you YourKit for providing your excellent profiling software for free.
+Thank you [YourKit](https://www.yourkit.com/ "YourKit") for providing your excellent profiling software for free.
