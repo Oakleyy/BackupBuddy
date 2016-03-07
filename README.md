@@ -1,6 +1,9 @@
-# BackupBuddy [![Build Status](https://build.oakley.ninja/job/Backup%20Buddy/badge/icon)](https://build.oakley.ninja/job/Backup%20Buddy/)
+# BackupBuddy
 JavaFX Application for uploading files to Google Cloud Storage
 
 ## Current Features
 
 ## Goals
+
+##YourKit Java Profiler
+Thank you YourKit for providing your excellent profiling software for free.
