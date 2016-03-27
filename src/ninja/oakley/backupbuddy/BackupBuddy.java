@@ -71,6 +71,15 @@ public class BackupBuddy extends Application {
      */
     @Override
     public void init() {
+
+        encryptionManager = new EncryptionManager(this);
+        configurationManager = new ConfigurationManager();
+        requestHandler = new RequestHandler(this);
+        
+        new Thread(new LoadConfigurationRunnable(this)).start();
+
+        requestHandler.createThreads(requestHandler.getMaxThreads(), false);
+
         try {
             addBucketController = new AddBucketScreenController(this);
             addBucketController.load();
@@ -80,7 +89,7 @@ public class BackupBuddy extends Application {
 
             contextMenuController = new ContextMenuScreenController(this);
             contextMenuController.load();
-            
+
             keyManagerController = new KeyManagerScreenController(this);
             keyManagerController.load();
 
@@ -90,14 +99,6 @@ public class BackupBuddy extends Application {
         } catch (IOException e) {
             logger.error("Failed to load FXML file: " + e);
         }
-
-        configurationManager = new ConfigurationManager();
-        new Thread(new LoadConfigurationRunnable(this)).start();
-
-        requestHandler = new RequestHandler(this);
-        requestHandler.createThreads(requestHandler.getMaxThreads(), false);
-
-        encryptionManager = new EncryptionManager();
     }
 
     /**
@@ -184,7 +185,7 @@ public class BackupBuddy extends Application {
     public AddBucketScreenController getAddBucketController() {
         return addBucketController;
     }
-    
+
     /**
      * Used to control the Base Window
      *

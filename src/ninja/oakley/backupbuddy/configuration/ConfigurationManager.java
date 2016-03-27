@@ -14,6 +14,7 @@ import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
+import ninja.oakley.backupbuddy.encryption.Key;
 import ninja.oakley.backupbuddy.project.Project;
 
 public class ConfigurationManager {
@@ -33,10 +34,13 @@ public class ConfigurationManager {
 
     public void loadConfig() throws FileNotFoundException {
         Constructor cont = new Constructor(Configuration.class);
-        TypeDescription projectDesc = new TypeDescription(Project.class);
-        projectDesc.putListPropertyType("projects", Project.class);
-        cont.addTypeDescription(projectDesc);
-        Yaml yaml = new Yaml();
+
+        TypeDescription configDesc = new TypeDescription(Configuration.class);
+        configDesc.putListPropertyType("projects", Project.class);
+        configDesc.putListPropertyType("keys", Key.class);
+        cont.addTypeDescription(configDesc);
+
+        Yaml yaml = new Yaml(cont);
         config = (Configuration) yaml.load(new FileInputStream(Paths.get("backupbuddy.yml").toFile()));
     }
 
@@ -60,8 +64,24 @@ public class ConfigurationManager {
         getConfig().getProjects().add(project);
     }
 
+    public void removeProject(Project project) {
+        getConfig().getProjects().remove(project);
+    }
+
     public List<Project> getProjects() {
         return getConfig().getProjects();
+    }
+
+    public void addKey(Key key) {
+        getConfig().getKeys().add(key);
+    }
+
+    public void removeKey(Key key) {
+        getConfig().getKeys().remove(key);
+    }
+
+    public List<Key> getKeys() {
+        return getConfig().getKeys();
     }
 
     private Configuration getConfig() {

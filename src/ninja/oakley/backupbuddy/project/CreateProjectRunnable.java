@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ninja.oakley.backupbuddy.BackupBuddy;
-import ninja.oakley.backupbuddy.configuration.SaveProjectRunnable;
+import ninja.oakley.backupbuddy.configuration.SaveConfigurationRunnable;
 
 public class CreateProjectRunnable implements Runnable {
 
@@ -39,7 +39,7 @@ public class CreateProjectRunnable implements Runnable {
             instance.getProjects().put(projectId, manager);
             instance.getConfigurationManager().addProject(manager.getProject());
 
-            new Thread(new SaveProjectRunnable(instance)).start();
+            new Thread(new SaveConfigurationRunnable(instance)).start();
             instance.getBaseController().refresh();
         } catch (FileNotFoundException e) {
 

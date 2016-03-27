@@ -10,11 +10,15 @@ public class Key {
         this.name = name;
         this.keyPath = keyPath;
     }
-    
+
     public Key(String name, String keyPath, String fingerPrint) {
         this.name = name;
         this.keyPath = keyPath;
         this.fingerPrint = fingerPrint;
+    }
+
+    public Key() {
+
     }
 
     public String getName() {
@@ -39,5 +43,10 @@ public class Key {
 
     public void setFingerPrint(String fingerPrint) {
         this.fingerPrint = fingerPrint;
+    }
+    
+    @Override
+    public String toString(){
+        return (name != null ? name : fingerPrint);
     }
 }

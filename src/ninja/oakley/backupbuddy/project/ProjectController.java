@@ -1,7 +1,5 @@
 package ninja.oakley.backupbuddy.project;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,6 +27,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.IOUtils;
 import com.google.api.services.storage.Storage;
 import com.google.api.services.storage.StorageScopes;
 import com.google.api.services.storage.model.Bucket;
@@ -36,8 +35,8 @@ import com.google.api.services.storage.model.Buckets;
 import com.google.api.services.storage.model.ObjectAccessControl;
 import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
-
-import ninja.oakley.backupbuddy.queue.Modifier;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 public class ProjectController {
 
@@ -131,40 +130,41 @@ public class ProjectController {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    public void uploadObject(String bucketName, String name, String contentType, File file,
-            MediaHttpUploaderProgressListener listener, Modifier... mod) throws IOException, GeneralSecurityException {
-        InputStreamContent contentStream = new InputStreamContent(contentType, new FileInputStream(file));
-        contentStream.setLength(file.length());
+    public void uploadObject(String bucketName, String name, String contentType, String fingerPrint, InputStream stream, MediaHttpUploaderProgressListener listener) throws IOException, GeneralSecurityException {
+        InputStreamContent contentStream = new InputStreamContent(contentType, stream);
+        contentStream.setLength(stream.available());
+        System.out.println(stream.available());
         /*
          * Sets the metadata such as name, access permissions, etc.
          */
-        StorageObject objectMetadata = new StorageObject().setName(name)
-                .setAcl(Arrays.asList(new ObjectAccessControl().setEntity("allUsers").setRole("READER")));
+        StorageObject objectMetadata = new StorageObject()
+                .setName(name)
+                .setAcl(Arrays.asList(new ObjectAccessControl().setEntity("allUsers").setRole("READER")))
+                .setMetadata(fingerPrint != null ? ImmutableMap.of("fingerprint", fingerPrint) : null);
 
         Storage.Objects.Insert insertRequest = getStorage().objects().insert(bucketName, objectMetadata, contentStream);
 
-        if (file.length() > 0 && file.length() <= 2 * 1000 * 1000) {
+        insertRequest.getMediaHttpUploader().setProgressListener(listener);
+        if (stream.available() > 0 && stream.available() <= 2 * 1000 * 1000) {
             insertRequest.getMediaHttpUploader().setDirectUploadEnabled(true);
         }
-
-        insertRequest.getMediaHttpUploader().setProgressListener(listener);
-        insertRequest.execute();
+        contentStream.writeTo(new FileOutputStream(name));
+        //insertRequest.setDisableGZipContent(true);
+        //insertRequest.execute();
     }
 
-    public void downloadObject(String bucketName, String name, Path save, MediaHttpDownloaderProgressListener listener)
-            throws IOException, GeneralSecurityException {
+    public StorageObject getObjectMetadata(String bucketName, String name) throws IOException, GeneralSecurityException {
         Storage.Objects.Get getRequest = getStorage().objects().get(bucketName, name);
-        getRequest.getMediaHttpDownloader().setDirectDownloadEnabled(true);
+        return getRequest.execute();
+    }
 
+    public InputStream downloadObject(String bucketName, String name, MediaHttpDownloaderProgressListener listener) throws IOException, GeneralSecurityException {
+        Storage.Objects.Get getRequest = getStorage().objects().get(bucketName, name);
+
+        getRequest.getMediaHttpDownloader().setDirectDownloadEnabled(true);
         getRequest.getMediaHttpDownloader().setProgressListener(listener);
 
-        if (name.endsWith("/")) {
-            Files.createDirectories(save);
-            return;
-        }
-
-        Files.createDirectories(save.getParent());
-        getRequest.executeMediaAndDownloadTo(new FileOutputStream(save.toFile()));
+        return getRequest.executeMediaAsInputStream();
     }
 
     public void deleteObject(String bucketName, String name) throws IOException, GeneralSecurityException {
@@ -177,17 +177,6 @@ public class ProjectController {
         Storage.Objects.Get getRequest = getStorage().objects().get(bucketName, name);
 
         return getRequest.execute();
-    }
-
-    public GZIPInputStream compressStream(InputStream stream) throws IOException {
-        return new GZIPInputStream(stream);
-    }
-
-    public CipherInputStream encryptStream(InputStream stream, PublicKey key)
-            throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
-        rsaCipher.init(Cipher.ENCRYPT_MODE, key);
-        return new CipherInputStream(stream, rsaCipher);
     }
 
     public List<Bucket> getBuckets() throws IOException, GeneralSecurityException {

@@ -27,22 +27,23 @@ import org.apache.commons.codec.binary.Hex;
 public class KeyHandler {
 
     private final static String ALGORITHM = "RSA";
-    
-    private Key key;  
+
+    private Key key;
     private RSAPrivateCrtKey rsa;
 
-    public KeyHandler(Key key){
+    public KeyHandler(Key key) {
         this.key = key;
     }
-    
-    public Key getKey(){
+
+    public Key getKey() {
         return key;
     }
 
     public InputStream encryptStream(InputStream stream)
-            throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
+            throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IOException {
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, rsa);
+
         return new CipherInputStream(stream, cipher);
     }
 
@@ -53,12 +54,12 @@ public class KeyHandler {
 
         return new CipherInputStream(stream, cipher);
     }
-    
-    public void constructKey() throws NoSuchAlgorithmException, InvalidKeySpecException, IOException{
-        RSAPrivateCrtKey r = loadPrivateKeyFromFile(Paths.get(key.getKeyPath()));
-        key.setFingerPrint(generateFingerPrint(r));
+
+    public void constructKey() throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+        rsa = loadPrivateKeyFromFile(Paths.get(key.getKeyPath()));
+        key.setFingerPrint(generateFingerPrint(rsa));
     }
-    
+
     private RSAPrivateCrtKey loadPrivateKeyFromFile(Path path)
             throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         File file = path.toFile();
@@ -74,7 +75,7 @@ public class KeyHandler {
 
         return (RSAPrivateCrtKey) kf.generatePrivate(spec);
     }
-    
+
     @SuppressWarnings("unused")
     private PublicKey loadPublicKeyFromFile(Path path)
             throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -102,5 +103,10 @@ public class KeyHandler {
         String hexUnread = new String(Hex.encodeHex(hash));
 
         return hexUnread.replaceAll("(.{2})(?!$)", "$1:");
+    }
+    
+    @Override
+    public String toString(){
+        return key.toString();
     }
 }

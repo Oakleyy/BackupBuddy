@@ -10,9 +10,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javafx.application.Platform;
 import ninja.oakley.backupbuddy.BackupBuddy;
-import ninja.oakley.backupbuddy.RefreshRunnable;
 
 public class LoadProjectsRunnable implements Runnable {
 
@@ -48,7 +46,6 @@ public class LoadProjectsRunnable implements Runnable {
         }
 
         instance.getProjects().putAll(rt);
-        Platform.runLater(new RefreshRunnable(instance, null, null, true));
     }
 
 }

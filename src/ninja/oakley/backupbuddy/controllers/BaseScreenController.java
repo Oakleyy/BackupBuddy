@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.api.services.storage.model.Bucket;
 import com.google.api.services.storage.model.StorageObject;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -33,6 +34,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.PreRefreshRunnable;
+import ninja.oakley.backupbuddy.RefreshRunnable;
 import ninja.oakley.backupbuddy.TreeItemDownloadRunnable;
 import ninja.oakley.backupbuddy.project.CreateProjectRunnable;
 import ninja.oakley.backupbuddy.project.ProjectController;
@@ -81,6 +83,8 @@ public class BaseScreenController extends AbstractScreenController<AnchorPane> {
         fileList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         fileList.setShowRoot(false);
         fileList.setContextMenu(instance.getContextMenuController().getBase());
+
+        Platform.runLater(new RefreshRunnable(instance, null, null, true));
     }
 
     @FXML
@@ -173,7 +177,10 @@ public class BaseScreenController extends AbstractScreenController<AnchorPane> {
                 return;
             }
 
-            UploadRequest req = new UploadRequest(controller, file.toPath(), bucketName);
+            UploadRequest req = new UploadRequest(controller, 
+                    instance.getKeyManagerController().getCurrentKeyHandler(),
+                    file.toPath(), 
+                    bucketName);
             instance.getRequestHandler().addRequest(req);
         }
 

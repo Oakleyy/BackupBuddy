@@ -10,12 +10,13 @@
   <children>
     <TableView fx:id="table" layoutX="14.0" layoutY="14.0" prefHeight="157.0" prefWidth="573.0">
       <columns>
-        <TableColumn fx:id="tableName" maxWidth="5000.0" minWidth="10.0" prefWidth="110.0" text="Name" />
-        <TableColumn fx:id="tableFingerPrint" maxWidth="5000.0" minWidth="10.0" prefWidth="92.0" text="Finger Print" />
-        <TableColumn fx:id="tableFilePath" prefWidth="75.0" text="File Path" />
+        <TableColumn fx:id="tableName" maxWidth="5000.0" minWidth="10.0" prefWidth="134.0" text="Name" />
+        <TableColumn fx:id="tableFingerPrint" maxWidth="5000.0" minWidth="10.0" prefWidth="240.0" text="Finger Print" />
+        <TableColumn fx:id="tableFilePath" prefWidth="198.0" text="File Path" />
       </columns>
     </TableView>
     <Button layoutX="14.0" layoutY="177.0" mnemonicParsing="false" onAction="#onAddKey" text="+" />
     <Button layoutX="55.0" layoutY="177.0" mnemonicParsing="false" onAction="#onRemoveKey" text="-" />
+      <ComboBox fx:id="currentKey" layoutX="186.0" layoutY="177.0" prefHeight="26.0" prefWidth="400.0" />
   </children>
 </AnchorPane>

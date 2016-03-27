@@ -1,4 +1,4 @@
-package ninja.oakley.backupbuddy;
+package ninja.oakley.backupbuddy.queue;
 
 import java.io.IOException;
 
@@ -8,8 +8,8 @@ import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
 
 import javafx.application.Platform;
+import ninja.oakley.backupbuddy.BackupBuddy;
 import ninja.oakley.backupbuddy.controllers.QueueScreenController;
-import ninja.oakley.backupbuddy.queue.Request;
 
 public class UploadDownloadProgressListener
         implements MediaHttpUploaderProgressListener, MediaHttpDownloaderProgressListener {

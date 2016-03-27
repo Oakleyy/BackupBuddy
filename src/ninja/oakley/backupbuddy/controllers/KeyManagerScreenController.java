@@ -3,37 +3,37 @@ package ninja.oakley.backupbuddy.controllers;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.ResourceBundle;
 
-import com.google.api.services.storage.model.Bucket;
-
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import ninja.oakley.backupbuddy.BackupBuddy;
+import ninja.oakley.backupbuddy.configuration.SaveConfigurationRunnable;
 import ninja.oakley.backupbuddy.encryption.KeyAlreadyExistsException;
 import ninja.oakley.backupbuddy.encryption.KeyHandler;
 
 public class KeyManagerScreenController extends AbstractScreenController<Pane> {
 
     private BackupBuddy instance;
-    
+
     private Scene scene;
     private FileChooser fileChooser;
-    
+
     @FXML
     private TableView<KeyHandler> table;
 
@@ -45,28 +45,51 @@ public class KeyManagerScreenController extends AbstractScreenController<Pane> {
 
     @FXML
     private TableColumn<KeyHandler, String> tableFilePath;
-    
-    public KeyManagerScreenController(BackupBuddy instance){
+
+    @FXML
+    private ComboBox<KeyHandler> currentKey;
+
+    public KeyManagerScreenController(BackupBuddy instance) {
         this.instance = instance;
         fileChooser = new FileChooser();
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        tableName.setCellValueFactory(new PropertyValueFactory<KeyHandler, String>("name"));
-        tableFingerPrint.setCellValueFactory(new PropertyValueFactory<KeyHandler, String>("fingerPrint"));
-        tableFilePath.setCellValueFactory(new PropertyValueFactory<KeyHandler, String>("filePath"));
+        tableName.setCellValueFactory(new Callback<CellDataFeatures<KeyHandler, String>, ObservableValue<String>>() {
+
+            @Override
+            public ObservableValue<String> call(CellDataFeatures<KeyHandler, String> data) {
+                return new ReadOnlyObjectWrapper<String>(data.getValue().getKey().getName());
+            }
+        });
+
+        tableFingerPrint.setCellValueFactory(new Callback<CellDataFeatures<KeyHandler, String>, ObservableValue<String>>() {
+
+            @Override
+            public ObservableValue<String> call(CellDataFeatures<KeyHandler, String> data) {
+                return new ReadOnlyObjectWrapper<String>(data.getValue().getKey().getFingerPrint());
+            }
+        });
+
+        tableFilePath.setCellValueFactory(new Callback<CellDataFeatures<KeyHandler, String>, ObservableValue<String>>() {
+
+            @Override
+            public ObservableValue<String> call(CellDataFeatures<KeyHandler, String> data) {
+                return new ReadOnlyObjectWrapper<String>(data.getValue().getKey().getKeyPath());
+            }
+        });
     }
 
     @FXML
     public void onAddKey() {
         File file = fileChooser.showOpenDialog(instance.getSecondaryStage());
-        
+
         try {
             instance.getEncryptionManager().addKey(null, file.toPath());
-            
-            updateTable();
-            
+            new Thread(new SaveConfigurationRunnable(instance)).start();
+
+            update();
         } catch (NoSuchAlgorithmException e) {
 
         } catch (InvalidKeySpecException e) {
@@ -76,27 +99,40 @@ public class KeyManagerScreenController extends AbstractScreenController<Pane> {
         } catch (KeyAlreadyExistsException e) {
 
         }
-        
+
     }
 
     @FXML
     public void onRemoveKey() {
+        KeyHandler handler = table.getSelectionModel().getSelectedItem();
 
+        if (handler == null) {
+            return;
+        }
+        instance.getEncryptionManager();
+        update();
     }
     
+    public KeyHandler getCurrentKeyHandler(){
+        return currentKey.getValue();
+    }
+
     public void openWindow() {
         if (scene == null) {
             scene = new Scene(getBase());
         }
 
+        update();
+
         Stage stage = instance.getSecondaryStage();
         stage.setScene(scene);
         stage.show();
     }
-    
-    public void updateTable() {
+
+    public void update() {
         ObservableList<KeyHandler> items = FXCollections.observableArrayList(instance.getEncryptionManager().getKeyHandlers());
         table.setItems(items);
+        currentKey.setItems(items);
     }
 
     @Override
@@ -104,7 +140,6 @@ public class KeyManagerScreenController extends AbstractScreenController<Pane> {
         FXMLLoader baseLoader = loadFxmlFile(BaseScreenController.class, "KeyManager.fxml");
         setController(baseLoader, this);
         base = (Pane) baseLoader.load();
-
     }
 
 }

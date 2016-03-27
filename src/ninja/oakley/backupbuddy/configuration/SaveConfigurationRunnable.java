@@ -7,13 +7,13 @@ import org.apache.logging.log4j.Logger;
 
 import ninja.oakley.backupbuddy.BackupBuddy;
 
-public class SaveProjectRunnable implements Runnable {
+public class SaveConfigurationRunnable implements Runnable {
 
-    private static final Logger logger = LogManager.getLogger(SaveProjectRunnable.class);
+    private static final Logger logger = LogManager.getLogger(SaveConfigurationRunnable.class);
 
     private BackupBuddy instance;
 
-    public SaveProjectRunnable(BackupBuddy instance) {
+    public SaveConfigurationRunnable(BackupBuddy instance) {
         this.instance = instance;
     }
 

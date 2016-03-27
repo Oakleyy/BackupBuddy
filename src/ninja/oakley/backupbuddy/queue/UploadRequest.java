@@ -1,18 +1,21 @@
 package ninja.oakley.backupbuddy.queue;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 
 import ninja.oakley.backupbuddy.BackupBuddy;
-import ninja.oakley.backupbuddy.UploadDownloadProgressListener;
+import ninja.oakley.backupbuddy.encryption.KeyHandler;
 import ninja.oakley.backupbuddy.project.ProjectController;
 
 public class UploadRequest implements Request {
 
     private ProjectController controller;
+    private KeyHandler keyHandler;
     private Path filePath;
     private String bucketName;
     private double progress;
@@ -21,6 +24,13 @@ public class UploadRequest implements Request {
         this.controller = controller;
         this.filePath = filePath;
         this.bucketName = bucketName;
+    }
+
+    public UploadRequest(ProjectController controller, KeyHandler keyHandler, Path filePath, String bucketName) {
+        this.controller = controller;
+        this.filePath = filePath;
+        this.bucketName = bucketName;
+        this.keyHandler = keyHandler;
     }
 
     public Path getFilePath() {
@@ -43,6 +53,10 @@ public class UploadRequest implements Request {
         return controller;
     }
 
+    public KeyHandler getKeyHandler(){
+        return keyHandler;
+    }
+
     @Override
     public double getProgress() {
         return progress;
@@ -55,8 +69,20 @@ public class UploadRequest implements Request {
 
     @Override
     public void execute(BackupBuddy instance) throws IOException, GeneralSecurityException {
-        controller.uploadObject(getBucketName(), getFile().getName(), getContentType(), getFile(),
-                new UploadDownloadProgressListener(this, instance));
+        InputStream stream;
+
+        if(keyHandler != null){
+            stream = keyHandler.encryptStream(new FileInputStream(filePath.toFile()));
+        } else {
+            stream = new FileInputStream(filePath.toFile());
+        }
+
+        controller.uploadObject(getBucketName(), 
+                getFile().getName(), 
+                getContentType(), 
+                keyHandler != null ? keyHandler.getKey().getFingerPrint() : null, 
+                        stream,
+                        new UploadDownloadProgressListener(this, instance));
     }
 
     @Override
